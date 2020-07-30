@@ -25,7 +25,7 @@ public class DiscardPile {
     }
 
     public boolean add(Card placedOnTop){
-        // if player types in a color/number that doesn't exist in uno Deck
+        // if player types in a color/number that doesn't exist in uno Deck (for ModelPTUI)
         if(placedOnTop == null){
             System.out.println("You did not enter a REAL card!!!");
             return false;
@@ -72,16 +72,23 @@ public class DiscardPile {
     }
 
     public void seeTopCard(){
-        System.out.print("Last Played Card:");
+        System.out.print("Last Played Card: ");
         try{
             System.out.println(discardPile.peek().getColor() + " " + discardPile.peek().getNumber());
         }catch(EmptyStackException ese){
             System.out.println("The Stack is still empty! Play a valid card next time!");
         }
-
     }
 
+    public void clear(){
+        discardPile.clear();
+    }
 
+    public Stack<Card> getDiscardPile() {
+        return discardPile;
+    }
 
-
+    public int size(){
+        return discardPile.size();
+    }
 }

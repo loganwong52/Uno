@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.scene.paint.Color;
 import java.util.ArrayList;
 
 public class Hand{
@@ -56,12 +57,48 @@ public class Hand{
         return null;
     }
 
-
     public void printHand(){
         System.out.println("YOUR CURRENT HAND:");
         for(int i = 0; i < hand.size(); ++i){
             hand.get(i).printCard();
         }
+    }
+
+    /**
+     * Checks if there are not VALID cards in the hand.
+     * If there aren't, it returns true, that the player
+     * needs to draw 1 new card. Otherwise, the player
+     * doesn't need to draw 1 new card.
+     * @param topColor
+     * @param topNum
+     * @return true/false
+     */
+    public boolean needToDraw(Color topColor, int topNum){
+        int numOfInvalidCards = 0;
+        String topColorStr;
+        if(topColor.equals(Color.RED)){
+            topColorStr = "RED";
+        }else if(topColor.equals(Color.YELLOW)){
+            topColorStr = "YELLOW";
+        }else if(topColor.equals(Color.BLUE)){
+            topColorStr = "BLUE";
+        }else if(topColor.equals(Color.GREEN)){
+            topColorStr = "GREEN";
+        }else {
+            topColorStr = "BLACK";
+        }
+
+        for(int i = 0; i < hand.size(); ++i){
+            if(!hand.get(i).getColor().equals(topColorStr) &&
+                    !hand.get(i).getColor().equals("BLACK") &&
+                    hand.get(i).getNumber() != topNum ){
+                ++numOfInvalidCards;
+            }
+        }
+        if(numOfInvalidCards == hand.size()){
+            return true;
+        }
+        return false;
     }
 
 }

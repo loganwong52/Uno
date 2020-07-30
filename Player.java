@@ -1,15 +1,15 @@
 package sample;
 
-import javafx.scene.layout.GridPane;
-
-import java.io.*;
-
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.stage.Stage;
 
 public class Player extends Thread{
     private Hand hand;
     private int playerNumber;
     private boolean myTurn;
-    private boolean won;
+    private boolean lost;
     private HandGrid handGrid;
     private Player nextPlayer;
     private PlayingField playingField;
@@ -18,7 +18,7 @@ public class Player extends Thread{
         hand = h;
         playerNumber = num;
         myTurn = false;
-        won = false;
+        lost = false;
     }
 
     public Hand getHand() {
@@ -67,15 +67,37 @@ public class Player extends Thread{
 
     public void run() {
         System.out.println("Player " + playerNumber + "'s thread has started!");
-        while(hand.getSize() > 0 && !won){
+        while(hand.getSize() > 0 && !lost){
                 playingField.enableCards(ModelGUI.turnOrder.peek());
         }
-
-        if(won) {
-            System.out.println("PLAYER " + playerNumber + " won the game!");
-        }else{
-            System.out.println("You Lost!");
+        synchronized (this){
+            notifyAll();        //I dunno... get all waiting threads to stop waiting?
         }
+        System.out.println("Player #" + playerNumber + " has exited the while loop.");
+        if(hand.getSize() == 0){
+            System.out.println("PLAYER " + playerNumber + " has won the game!");
+            Platform.runLater(()-> {
+                Label winner = new Label();
+                Stage victoryWindow = new Stage();
+                if(playerNumber != 1){
+                    winner.setText("PLAYER " + playerNumber + " won the game!\nYOU LOST!");
+                }else{
+                    winner.setText("PLAYER " + playerNumber + " won the game!");        //basically player 1, you, won the game
+                }
+                victoryWindow.setScene(new Scene(winner));
+                victoryWindow.show();
+            });
+        }else{
+            System.out.println("PLAYER " + playerNumber + " has lost the game!");
+        }
+    }
+
+    public boolean hasLost() {
+        return lost;
+    }
+
+    public void setLost(boolean l) {
+        lost = l;
     }
 
     public void stopWaiting(){

@@ -12,7 +12,6 @@ public class Deck extends Stack {
     private int numOfPlayers;
     private static Card[] deck;
     private Stack<Card> deckStack;
-    private int cardsLeft;
     private static final int STARTINGAMT = 108;
 
     public Deck(int num){
@@ -72,7 +71,6 @@ public class Deck extends Stack {
             deck[i] = new Card("BLACK", 100);
         }
 
-        cardsLeft = STARTINGAMT;
     }
 
     /**
@@ -99,7 +97,6 @@ public class Deck extends Stack {
 
         //rearrange cards in nonShuffled into shuffled deck
         for(int i = 0; i < cardsInDeck; ++i){
-            //shuffledDeck[i] = nonShuffled[numbers[i]];
             shuffledDeck[i] = deck[numbers.get(i)];
         }
 
@@ -144,68 +141,44 @@ public class Deck extends Stack {
 
     /**
      * removes the top card from the deck,
-     * which is a stack. Decreases cardsLeft by 1
+     * which is a STACK. Decreases cardsLeft by 1
      * @return draw  the card that was removed from the stack
      */
     public Card drawOne(){
         Card draw = deckStack.pop();
-        cardsLeft = deckStack.size();
         return draw;
     }
 
     /**
-     * puts discardpile back into the deck and shuffles it.
+     * Shuffles the discardpile and puts it back into the deck.
      * @param discardPile
      * @return top card of the discardPile, which is the new discardPile
      */
-    public Card shuffleDiscardPile(Stack discardPile){
-        //called when cardsleft = 0
-        Card rVCard = (Card) discardPile.pop();
-
-        int size = discardPile.size()-1;
-        Card[] unshuffledPile = new Card[size];
-        int[] numbers = new int[size];
-        Card[] shuffled = new Card[size];
-        int counter = 0;
-
-        while(!discardPile.isEmpty()) {
-            unshuffledPile[counter] = (Card) discardPile.pop();
-            ++counter;
-        }
-        deckStack.clear();  //just in case, I guess...
-
-        Random rand = new Random();
-        int checker = 0;
-        int randInt = rand.nextInt(size);
-        numbers[0] = randInt;
-
-        for(int i = 1; i < size; ++i){
-            //generates int from 0-107 inclusive
-            randInt = rand.nextInt(size);
-            //make sure the randInt isn't a duplicate number
-            while(checker < i){
-                if(numbers[checker] == randInt){
-                    randInt = rand.nextInt(size);
-                    checker = 0;
-                }
-                ++checker;
-            }
-
-            //if it's not a duplicate, then add it to array
-            numbers[i] = randInt;
-            checker = 0;
-        }
-
-        //shuffle unshuffledPile by putting it randomly into toBeShuffled
+    public Card replenish(Stack<Card> discardPile){
+        //called when deckStack.size() == 0
+        Card rVCard = discardPile.pop();
+        int size = discardPile.size();
+        ArrayList<Card> shuffledDiscardPile = new ArrayList<>();
         for(int i = 0; i < size; ++i){
-            shuffled[i] = unshuffledPile[numbers[i]];
+            shuffledDiscardPile.add( discardPile.pop() );
         }
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
+        Collections.shuffle(shuffledDiscardPile);
 
-        //stackify shuffled
+        deckStack.clear();      //might already be empty, but just in case.
+
+        //put the shuffled discardPile into the deck
         for(int i = 0; i < size; ++i){
-            deckStack.push(shuffled[i]);
+            deckStack.push(shuffledDiscardPile.get(i));
         }
-
         //the old discardPile is assigned to the return value.
         return rVCard;
     }
@@ -228,6 +201,9 @@ public class Deck extends Stack {
         return hands;
     }
 
+    public int getCardsLeft(){
+        return deckStack.size();
+    }
 
     public Card beginGame(int cardsInDeck){
         /**

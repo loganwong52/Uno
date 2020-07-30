@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.ObjectInputStream;
@@ -21,181 +22,151 @@ public class PlayingField{
     //the critical region AKA the monitor
 
     private int numOfPlayers;
-    private Player player1;
-    private Player player2;
-    private Player player3;
-    private Player player4;
     private boolean ready;
-    private int blackCardPlayed;
-    private Stage stage2;
+    //private int blackCardPlayed;
+    private Color topColor;
+    private int topNum;
+    private boolean skip1Player;
+    private boolean invalidCardDrawn;
+    private boolean previousPlayerHasUno;
 
-    public PlayingField(int players, Player p1, Player p2, Player p3, Player p4){
+    public PlayingField(int players){//, Color color, int n){//Player p1, Player p2, Player p3, Player p4){
         numOfPlayers = players;
         ready = false;
-        player1 = p1;
-        player2 = p2;
-        if(numOfPlayers >=3){
-            player3 = p3;
-        }
-        if(players == 4){
-            player4 = p4;
-        }
-        ready = false;
-        blackCardPlayed = 0;
+        //blackCardPlayed = 0;
+        topColor = RED;
+        topNum = 52;
+        skip1Player = false;
+        invalidCardDrawn = false;
+        previousPlayerHasUno = false;
     }
+
+    public void updateColor(Color c){
+        topColor = c;
+    }
+    public void updateNum(int n){
+        topNum = n;
+    }
+
+    public int getTopNum() {
+        return topNum;
+    }
+    public Color getTopColor() {
+        return topColor;
+    }
+
+    public void setSkip1Player(boolean skip1Player) {
+        this.skip1Player = skip1Player;
+    }
+    public void setInvalidCardDrawn(boolean tf) {
+        invalidCardDrawn = tf;
+    }
+    public void setPreviousPlayerHasUno(boolean tf){previousPlayerHasUno = tf;}
 
     public synchronized void enableCards(Player turnPlayer) {
         System.out.println("-------------------");
         System.out.println("Turn Player: p-l-a-y-e-r #" + turnPlayer.getPlayerNumber());
-        turnPlayer.printPlayer();
-        /**for (Player p : ModelGUI.turnOrder) {
-            System.out.println("Player #" + p.getPlayerNumber());
-        }*/
-        System.out.println("turnOrder.peek: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-        System.out.println("It is the TOP player in turnOrder's turn:   " + ModelGUI.turnOrder.peek().getTurn());
-        System.out.println(ready);
-        while (blackCardPlayed != 1 &&
-                (!ModelGUI.turnOrder.peek().equals(turnPlayer) || ModelGUI.turnOrder.peek().getTurn() == false || ready == false) ) {
+        while ( (!ModelGUI.turnOrder.peek().equals(turnPlayer) || ModelGUI.turnOrder.peek().getTurn() == false || ready == false) ) {
             try {
                 wait();     //players are waiting for it to be THEIR turn
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            if(turnPlayer.getHand().getSize() == 0){
+                return;
+            }
+        }
+        if(previousPlayerHasUno){
+            try{
+                turnPlayer.sleep(3000);
+                /*to prevent turnPlayer from going before previous
+                player presses the UNO! button (or forgets to press it)*/
+            }catch(InterruptedException e){
+                e.printStackTrace();
+            }
+            previousPlayerHasUno = false;
+        }else{
+            try{
+                turnPlayer.sleep(500);      //to allow the HUMAN player to not be overwhelmed by speed.
+            }catch(InterruptedException e){
+                e.printStackTrace();
+            }
         }
         ready = false;
-        //turnPlayer.getHandGrid().setClickable(true);
-        //System.out.println("turn player can click their buttons.   " + turnPlayer.getHandGrid().isClickable());
         turnPlayer.getHandGrid().enableAll(turnPlayer);
+
+        //If the player doesn't have any valid cards, they get to draw 1 card.
+        if(!topColor.equals(BLACK) && ModelGUI.turnOrder.peek().getHand().needToDraw(topColor, topNum)){
+            ModelGUI.setUnoDeckButton(false);
+            ModelGUI.unoDeckButtonAction(ModelGUI.turnOrder.peek());
+        }
         try {
             wait();     //waiting for the player to click a button.
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         }
-        System.out.println("Is a black card played? :  " + turnPlayer.getHand().getBlackCardPlayed());
-        if(turnPlayer.getHand().getBlackCardPlayed() == 1){
-            blackCardPlayed = 1;
-            System.out.println("Player is choosing a card: ");
-            for(Player p : ModelGUI.turnOrder){
-                if(!p.equals(turnPlayer)){
-                    try{
-                        synchronized (p){
-                            p.wait();       //make the non-turnPlayer threads wait until color is picked
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+        /**if the turn player had no valid cards, they drew 1 card
+         * if that card they drew was also invalid, then their turn is
+         * over. So to avoid accidentally activating the card that
+         * was played LAST turn AGAIN, there's an if-statement.
+         */
+        if(invalidCardDrawn == false) {
+            if (turnPlayer.getHand().getBlackCardPlayed() == 1) {
+                //blackCardPlayed = 1;
+                turnPlayer.getHand().setBlackCardPlayed(0);     //ends the while loop in ModelGUI in p1's button event handler
             }
+            if (turnPlayer.getHand().getSize() != 0) {    //if player hasn't won yet
+                //Update the turnOrder.
+                if (numOfPlayers > 2 && topNum == 11) {       //REVERSE
+                    Stack<Player> tempHolderStack = new Stack<>();
+                    for (int i = 0; i < numOfPlayers; ++i) {
+                        tempHolderStack.push(ModelGUI.turnOrder.remove());
+                    }
+                    ModelGUI.turnOrder.clear();
+                    for (int i = 0; i < numOfPlayers; ++i) {
+                        ModelGUI.turnOrder.add(tempHolderStack.pop());
+                    }
+                    ModelGUI.reverseTurnOrder();
 
-            /*Platform.runLater(()->{
-                Stage stage2 = new Stage();
-                HBox hBox = new HBox();
-                BorderPane borderPane = new BorderPane();
-                borderPane.setTop(new Label("Click on the color you want!"));
-                Button red = new Button();
-                red.setStyle("-fx-background-color: #ff0000");  //red
-                red.setPrefSize(50, 50);
-                Button yellow = new Button();
-                yellow.setStyle("-fx-background-color: #FFFF00"); //yellow
-                yellow.setPrefSize(50, 50);
-                Button blue = new Button();
-                blue.setStyle("-fx-background-color: #0000FF"); //blue
-                blue.setPrefSize(50, 50);
-                Button green = new Button();
-                green.setStyle("-fx-background-color: #008000"); //green
-                green.setPrefSize(50, 50);
-
-                //event handling
-                red.setOnMouseClicked(mouseEvent2 -> {
-                    //rectangle aka topColor is index 0
-                    //label aka cardtext is index 1
-                    ModelGUI.updateDiscardPileStackPane(RED, "RED");
-                    stage2.close();
-                    this.setBlackCardPlayed(0);
+                } else {
                     ModelGUI.turnOrder.remove();
-                    ModelGUI.turnOrder.add(turnPlayer);  //re-add turnplayer to the end of the Queue
-                    System.out.println("CHECKING of the turnOrder: ");
-                    for (Player p : ModelGUI.turnOrder) {
-                        System.out.println("Player #" + p.getPlayerNumber());
-                    }
-                    ModelGUI.turnOrder.peek().setMyTurn(true);
-                    System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-                    System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
-                    //turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
-                    synchronized (this) {
-                        notifyAll();
-                    }
-                });
-                yellow.setOnMouseClicked(mouseEvent2 -> {
-                    ModelGUI.updateDiscardPileStackPane(YELLOW, "YELLOW");
-                    stage2.close();
-                    this.setBlackCardPlayed(0);
-                    ModelGUI.turnOrder.remove();
-                    ModelGUI.turnOrder.add(turnPlayer);  //re-add turnplayer to the end of the Queue
-                    System.out.println("CHECKING of the turnOrder: ");
-                    for (Player p : ModelGUI.turnOrder) {
-                        System.out.println("Player #" + p.getPlayerNumber());
-                    }
-                    ModelGUI.turnOrder.peek().setMyTurn(true);
-                    System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-                    System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
-                    //turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
-                    synchronized (this) {
-                        notifyAll();
-                    }
-                });
-                green.setOnMouseClicked(mouseEvent2 -> {
-                    ModelGUI.updateDiscardPileStackPane(GREEN, "GREEN");
-                    stage2.close();
-                    this.setBlackCardPlayed(0);
-                    ModelGUI.turnOrder.remove();
-                    ModelGUI.turnOrder.add(turnPlayer);  //re-add turnplayer to the end of the Queue
-                    System.out.println("CHECKING of the turnOrder: ");
-                    for (Player p : ModelGUI.turnOrder) {
-                        System.out.println("Player #" + p.getPlayerNumber());
-                    }
-                    ModelGUI.turnOrder.peek().setMyTurn(true);
-                    System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-                    System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
-                    //turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
-                    synchronized (this) {
-                        notifyAll();
-                    }
-                });
-                blue.setOnMouseClicked(mouseEvent2 -> {
-                    ModelGUI.updateDiscardPileStackPane(BLUE, "BLUE");
-                    stage2.close();
-                    this.setBlackCardPlayed(0);
-                    ModelGUI.turnOrder.remove();
-                    ModelGUI.turnOrder.add(turnPlayer);  //re-add turnplayer to the end of the Queue
-                    System.out.println("CHECKING of the turnOrder: ");
-                    for (Player p : ModelGUI.turnOrder) {
-                        System.out.println("Player #" + p.getPlayerNumber());
-                    }
-                    ModelGUI.turnOrder.peek().setMyTurn(true);
-                    System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-                    System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
-                    //turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
-                    synchronized (this) {
-                        notifyAll();
-                    }
-                });
+                    ModelGUI.turnOrder.add(turnPlayer);
+                }
+                if ((skip1Player && topNum == 10) || (numOfPlayers == 2 && topNum == 11)) {       //SKIP
+                    Player next = ModelGUI.turnOrder.remove();
+                    ModelGUI.turnOrder.add(next);
+                    skip1Player = false;
+                }
 
-                //prevent stage2 from being closed if the RED X button is clicked!
-                Platform.runLater(() -> stage2.setOnCloseRequest(evt -> {
-                    evt.consume();
-                }));
-
-                hBox.getChildren().addAll(red, yellow, blue, green);
-                borderPane.setCenter(hBox);
-                stage2.setScene(new Scene(borderPane));
-                stage2.show();
-
-            });*/
-            turnPlayer.getHand().setBlackCardPlayed(0);     //ends the while looop in ModelGUI in p1's button event handler
+                System.out.println("CHECKING of the turnOrder: ");
+                for (Player p : ModelGUI.turnOrder) {
+                    System.out.println("Player #" + p.getPlayerNumber());
+                }
+                ModelGUI.turnOrder.peek().setMyTurn(true);
+                //System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
+                //System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
+                turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
+            } else {
+                System.out.println("Player #" + turnPlayer.getPlayerNumber() + " has reached 0 cards!!!");
+                for (Player p : ModelGUI.turnOrder) {
+                    p.setLost(true);
+                }
+            /*synchronized (this) {
+                /**the other threads are waiting for it to be THEIR turn,
+                 * so tell them to stop, and then they'll see that
+                 * the turnPlayer has 0 cards in hand, so they leave this
+                 * method and exit their while loop in Player. Then they
+                 * print their win/lose messages.
+                 */
+                //notifyAll();
+                //}
+                this.prepNextPlayer();
+                turnPlayer.stopWaiting();
+            }
         }else{
+            invalidCardDrawn = false;       //reset the boolean
             ModelGUI.turnOrder.remove();
-            ModelGUI.turnOrder.add(turnPlayer);  //re-add turnplayer to the end of the Queue
+            ModelGUI.turnOrder.add(turnPlayer);
             System.out.println("CHECKING of the turnOrder: ");
             for (Player p : ModelGUI.turnOrder) {
                 System.out.println("Player #" + p.getPlayerNumber());
@@ -212,7 +183,7 @@ public class PlayingField{
         ready = true;
     }
 
-    public void setBlackCardPlayed(int tF) {
+    /*public void setBlackCardPlayed(int tF) {
         //1 is true;
         //0 is false;
         blackCardPlayed = tF;
@@ -220,5 +191,5 @@ public class PlayingField{
 
     public int getBlackCardPlayed() {
         return blackCardPlayed;
-    }
+    }*/
 }
