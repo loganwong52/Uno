@@ -16,29 +16,27 @@ import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static javafx.scene.paint.Color.*;
-import static javafx.scene.paint.Color.BLUE;
 
 public class PlayingField{
     //the critical region AKA the monitor
-
     private int numOfPlayers;
     private boolean ready;
-    //private int blackCardPlayed;
     private Color topColor;
     private int topNum;
     private boolean skip1Player;
     private boolean invalidCardDrawn;
     private boolean previousPlayerHasUno;
+    private boolean firstTopCardIsBlack;
 
-    public PlayingField(int players){//, Color color, int n){//Player p1, Player p2, Player p3, Player p4){
+    public PlayingField(int players){
         numOfPlayers = players;
         ready = false;
-        //blackCardPlayed = 0;
-        topColor = RED;
-        topNum = 52;
+        topColor = RED;     //default value
+        topNum = 52;        //default value
         skip1Player = false;
         invalidCardDrawn = false;
         previousPlayerHasUno = false;
+        firstTopCardIsBlack = false;
     }
 
     public void updateColor(Color c){
@@ -62,10 +60,11 @@ public class PlayingField{
         invalidCardDrawn = tf;
     }
     public void setPreviousPlayerHasUno(boolean tf){previousPlayerHasUno = tf;}
+    public void setFirstTopCardIsBlack(boolean t) {
+        firstTopCardIsBlack = t;
+    }
 
     public synchronized void enableCards(Player turnPlayer) {
-        System.out.println("-------------------");
-        System.out.println("Turn Player: p-l-a-y-e-r #" + turnPlayer.getPlayerNumber());
         while ( (!ModelGUI.turnOrder.peek().equals(turnPlayer) || ModelGUI.turnOrder.peek().getTurn() == false || ready == false) ) {
             try {
                 wait();     //players are waiting for it to be THEIR turn
@@ -76,44 +75,53 @@ public class PlayingField{
                 return;
             }
         }
+        System.out.println("-------------------");
+        System.out.println("Turn Player: player #" + turnPlayer.getPlayerNumber());
         if(previousPlayerHasUno){
             try{
-                turnPlayer.sleep(3000);
+                turnPlayer.sleep(2510);
                 /*to prevent turnPlayer from going before previous
                 player presses the UNO! button (or forgets to press it)*/
             }catch(InterruptedException e){
                 e.printStackTrace();
             }
             previousPlayerHasUno = false;
-        }else{
+        }
+        else{
             try{
-                turnPlayer.sleep(500);      //to allow the HUMAN player to not be overwhelmed by speed.
+                turnPlayer.sleep(250);      //to prevent the HUMAN player from being overwhelmed by speed.
             }catch(InterruptedException e){
                 e.printStackTrace();
             }
         }
         ready = false;
-        turnPlayer.getHandGrid().enableAll(turnPlayer);
-
+        if(!firstTopCardIsBlack) {
+            turnPlayer.getHandGrid().enableAll(turnPlayer);
+        }
         //If the player doesn't have any valid cards, they get to draw 1 card.
         if(!topColor.equals(BLACK) && ModelGUI.turnOrder.peek().getHand().needToDraw(topColor, topNum)){
             ModelGUI.setUnoDeckButton(false);
             ModelGUI.unoDeckButtonAction(ModelGUI.turnOrder.peek());
         }
+        ModelGUI.turnOrder.peek().getHand().canPlayDraw4(topColor, topNum);         //this checks if the turnPlayer can play a Draw 4
+
         try {
-            wait();     //waiting for the player to click a button.
+            /*waiting for the player to click a card-button in the hand OR
+            in the case of a wild card, once the color is chosen.
+            this stops waiting when prepNextPlayer() is called. */
+            wait();
         } catch (InterruptedException ie) {
             ie.printStackTrace();
         }
-        /**if the turn player had no valid cards, they drew 1 card
-         * if that card they drew was also invalid, then their turn is
-         * over. So to avoid accidentally activating the card that
-         * was played LAST turn AGAIN, there's an if-statement.
+        /**If the turn player drew 1 card because their hand was invalid
+         * and the card they drew was also invalid, their turn ends.
+         * To avoid activating the card that was played LAST turn
+         * AGAIN, the if-statement below is used.
          */
         if(invalidCardDrawn == false) {
             if (turnPlayer.getHand().getBlackCardPlayed() == 1) {
                 //blackCardPlayed = 1;
-                turnPlayer.getHand().setBlackCardPlayed(0);     //ends the while loop in ModelGUI in p1's button event handler
+                turnPlayer.getHand().setBlackCardPlayed(0);
             }
             if (turnPlayer.getHand().getSize() != 0) {    //if player hasn't won yet
                 //Update the turnOrder.
@@ -132,7 +140,14 @@ public class PlayingField{
                     ModelGUI.turnOrder.remove();
                     ModelGUI.turnOrder.add(turnPlayer);
                 }
-                if ((skip1Player && topNum == 10) || (numOfPlayers == 2 && topNum == 11)) {       //SKIP
+                if ((skip1Player && topNum == 10) ||
+                        topNum == 100 ||
+                        (numOfPlayers == 2 && topNum == 11 ) ||
+                        (skip1Player && topNum == 12) ) {       //SKIP
+                    /*skip the next player's turn IF a skip is played (10)
+                      OR if the top card is a Wild Draw 4
+                      OR if there are only 2 players and a reverse is played
+                      OR if a "draw 2" is played.*/
                     Player next = ModelGUI.turnOrder.remove();
                     ModelGUI.turnOrder.add(next);
                     skip1Player = false;
@@ -183,13 +198,4 @@ public class PlayingField{
         ready = true;
     }
 
-    /*public void setBlackCardPlayed(int tF) {
-        //1 is true;
-        //0 is false;
-        blackCardPlayed = tF;
-    }
-
-    public int getBlackCardPlayed() {
-        return blackCardPlayed;
-    }*/
 }

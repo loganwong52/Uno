@@ -66,7 +66,7 @@ public class Player extends Thread{
     }
 
     public void run() {
-        System.out.println("Player " + playerNumber + "'s thread has started!");
+        //System.out.println("Player " + playerNumber + "'s thread has started!");
         while(hand.getSize() > 0 && !lost){
                 playingField.enableCards(ModelGUI.turnOrder.peek());
         }

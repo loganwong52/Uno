@@ -47,14 +47,6 @@ public class DiscardPile {
             discardPile.push(placedOnTop);
             topColor = placedOnTop.getColor();
 
-            //what if the card's color was black
-                //handled in the GUI :)
-
-            //what if the card's number was black & DRAW 4 (AKA num = 100)
-            //what if the card's number was 10
-            // number was 11
-            // number was 12
-
             System.out.println(placedOnTop.cardInfo(placedOnTop) + " was a v-a-l-i-d m-o-v-e :)");
             return true;
 
@@ -62,6 +54,7 @@ public class DiscardPile {
             //INVALID card played
             System.out.println(placedOnTop.getColor() + " " + placedOnTop.getNumber() + " was an INVALID move!!!");
             seeTopCard();
+            //in case a black card was played, the topColor != discardPile.peek().getColor()
             System.out.println("Top color: " + topColor);
             return false;
         }
