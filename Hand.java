@@ -159,4 +159,32 @@ public class Hand{
     public boolean getCanPlayDraw4() {
         return canPlayDraw4;
     }
+
+    public String getMostCommonColor(){
+        int redCounter = 0;
+        int yellowCounter = 0;
+        int blueCounter = 0;
+        int greenCounter = 0;
+        for(Card c : hand){
+            if(c.getColor().equals("RED")){
+                ++redCounter;
+            }else if(c.getColor().equals("YELLOW")){
+                ++yellowCounter;
+            }else if(c.getColor().equals("BLUE")){
+                ++blueCounter;
+            }else if(c.getColor().equals("GREEN")){
+                ++greenCounter;
+            }
+        }
+        int greatest = Math.max(Math.max(redCounter, yellowCounter), Math.max(blueCounter, greenCounter));
+        if(greatest == redCounter){
+            return "RED";
+        }else if(greatest == yellowCounter){
+            return "YELLOW";
+        }else if(greatest == blueCounter){
+            return "BLUE";
+        }else{
+            return "GREEN";
+        }
+    }
 }

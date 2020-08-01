@@ -1,20 +1,7 @@
 package sample;
 
-import javafx.application.Platform;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-
-import java.io.ObjectInputStream;
 import java.util.Stack;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import static javafx.scene.paint.Color.*;
 
 public class PlayingField{
@@ -64,15 +51,25 @@ public class PlayingField{
         firstTopCardIsBlack = t;
     }
 
+    /**
+     * The critical region for all the Player Threads.
+     * It makes them wait when it isn't their turn.
+     * It updates the turn order. If a special card is
+     * played, it activates their effects. It checks if
+     * the turn player needs to draw a card. It checks
+     * if they have UNO. It checks if a player has won yet.
+     * @param turnPlayer
+     */
     public synchronized void enableCards(Player turnPlayer) {
         while ( (!ModelGUI.turnOrder.peek().equals(turnPlayer) || ModelGUI.turnOrder.peek().getTurn() == false || ready == false) ) {
             try {
                 wait();     //players are waiting for it to be THEIR turn
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
-            if(turnPlayer.getHand().getSize() == 0){
-                return;
+            }finally{
+                if(ModelGUI.turnOrder.peek().getHand().getSize() == 0){
+                    return;
+                }
             }
         }
         System.out.println("-------------------");
@@ -120,11 +117,9 @@ public class PlayingField{
          */
         if(invalidCardDrawn == false) {
             if (turnPlayer.getHand().getBlackCardPlayed() == 1) {
-                //blackCardPlayed = 1;
                 turnPlayer.getHand().setBlackCardPlayed(0);
             }
             if (turnPlayer.getHand().getSize() != 0) {    //if player hasn't won yet
-                //Update the turnOrder.
                 if (numOfPlayers > 2 && topNum == 11) {       //REVERSE
                     Stack<Player> tempHolderStack = new Stack<>();
                     for (int i = 0; i < numOfPlayers; ++i) {
@@ -137,6 +132,7 @@ public class PlayingField{
                     ModelGUI.reverseTurnOrder();
 
                 } else {
+                    //Update the turnOrder.
                     ModelGUI.turnOrder.remove();
                     ModelGUI.turnOrder.add(turnPlayer);
                 }
@@ -158,24 +154,17 @@ public class PlayingField{
                     System.out.println("Player #" + p.getPlayerNumber());
                 }
                 ModelGUI.turnOrder.peek().setMyTurn(true);
-                //System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-                //System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
-                turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
+                turnPlayer.stopWaiting();    //tells ModelGUI that the turnOrder has finished updating.
             } else {
                 System.out.println("Player #" + turnPlayer.getPlayerNumber() + " has reached 0 cards!!!");
                 for (Player p : ModelGUI.turnOrder) {
-                    p.setLost(true);
+                    if(p.getPlayerNumber() != turnPlayer.getPlayerNumber()) {
+                        p.setLost(true);
+                    }
                 }
-            /*synchronized (this) {
-                /**the other threads are waiting for it to be THEIR turn,
-                 * so tell them to stop, and then they'll see that
-                 * the turnPlayer has 0 cards in hand, so they leave this
-                 * method and exit their while loop in Player. Then they
-                 * print their win/lose messages.
-                 */
-                //notifyAll();
-                //}
-                this.prepNextPlayer();
+                synchronized (this) {       //make other threads stop waiting
+                    notifyAll();
+                }
                 turnPlayer.stopWaiting();
             }
         }else{
@@ -189,7 +178,7 @@ public class PlayingField{
             ModelGUI.turnOrder.peek().setMyTurn(true);
             System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
             System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
-            turnPlayer.stopWaiting();    //this is to tell ModelGUI that the turnOrder has finished updating.
+            turnPlayer.stopWaiting();    //tells ModelGUI that the turnOrder has finished updating.
         }
     }
 
@@ -197,5 +186,4 @@ public class PlayingField{
         notifyAll();
         ready = true;
     }
-
 }

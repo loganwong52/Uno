@@ -1,8 +1,10 @@
 package sample;
 
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Player extends Thread{
@@ -61,30 +63,30 @@ public class Player extends Thread{
         playingField = p;
     }
 
-    public PlayingField getPlayingField(){
-        return playingField;
-    }
-
     public void run() {
         //System.out.println("Player " + playerNumber + "'s thread has started!");
         while(hand.getSize() > 0 && !lost){
                 playingField.enableCards(ModelGUI.turnOrder.peek());
         }
-        synchronized (this){
-            notifyAll();        //I dunno... get all waiting threads to stop waiting?
-        }
-        System.out.println("Player #" + playerNumber + " has exited the while loop.");
+        stopWaiting();
+        //System.out.println("Player #" + playerNumber + " has exited the while loop.");
         if(hand.getSize() == 0){
             System.out.println("PLAYER " + playerNumber + " has won the game!");
             Platform.runLater(()-> {
                 Label winner = new Label();
+                Label youLost = new Label("YOU LOST!");
                 Stage victoryWindow = new Stage();
+                VBox vBox = new VBox();
                 if(playerNumber != 1){
-                    winner.setText("PLAYER " + playerNumber + " won the game!\nYOU LOST!");
+                    winner.setText("PLAYER " + playerNumber + " won the game!");
+                    vBox.getChildren().addAll(winner, youLost);
+                    vBox.setAlignment(Pos.CENTER);
                 }else{
                     winner.setText("PLAYER " + playerNumber + " won the game!");        //basically player 1, you, won the game
+                    vBox.getChildren().add(winner);
+                    vBox.setAlignment(Pos.CENTER);
                 }
-                victoryWindow.setScene(new Scene(winner));
+                victoryWindow.setScene(new Scene(vBox));
                 victoryWindow.show();
             });
         }else{
