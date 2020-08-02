@@ -27,6 +27,27 @@ public class Hand{
         hand.add(drawedCard);
     }
 
+    /**
+     * Finds a card in your hand.
+     * @param color     the color you're looking for
+     * @param number    the number you're looking for
+     * @return the target if found, null Otherwise
+     */
+    public Card playCard(String color, int number){
+        Card target;
+        for(int i = 0; i < hand.size();++i){
+            target = hand.get(i);
+            if(target.getColor().equals(color) && target.getNumber() == number){
+                return target;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Actually REMOVES a card from the hand arraylist.
+     * @param cardBeingPlayed
+     */
     public void remove(Card cardBeingPlayed){
         hand.remove(cardBeingPlayed);
         if(cardBeingPlayed.getColor().equals("BLACK")){
@@ -40,23 +61,6 @@ public class Hand{
 
     public void setBlackCardPlayed(int tF) {
         blackCardPlayed = tF;
-    }
-
-    /**
-     * Finds a card in your hand.
-     * @param color
-     * @param number
-     * @return the target if found, null Otherwise
-     */
-    public Card playCard(String color, int number){
-        Card target;
-        for(int i = 0; i < hand.size();++i){
-            target = hand.get(i);
-            if(target.getColor().equals(color) && target.getNumber() == number){
-                return target;
-            }
-        }
-        return null;
     }
 
     public void printHand(){
@@ -103,6 +107,11 @@ public class Hand{
         return false;
     }
 
+    /**
+     * Checks if player's hand has A wild draw 4.
+     * The MOMENT it finds it, it returns true
+     * @return  true if there's a wild draw 4. False otherwise.
+     */
     private boolean hasDraw4(){
         for(int i = 0; i < hand.size(); ++i){
             if(hand.get(i).getNumber() == 100){
@@ -111,6 +120,7 @@ public class Hand{
         }
         return false;
     }
+
 
     /**
      * Counts the number of VALID cards in the turnPlayer's hand.
@@ -124,6 +134,10 @@ public class Hand{
         if(!hasDraw4()){
             return;
         }
+
+        System.out.println("The turnPlayer has a draw 4. Check their hand:");
+        printHand();
+
         //a valid card is any card that's valid AND it's not a Wild Draw 4
         int numOfValidCards = 0;
         String topColorStr;

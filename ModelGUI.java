@@ -19,6 +19,7 @@ import static javafx.scene.paint.Color.*;
 public class ModelGUI extends Application {
     private static final int CARDLENGTH = 80;
     private static final int CARDHEIGHT = 90;
+    private static Stage mainStage;
     private static DiscardPile discardPile;
     private static PlayingField playingField;
     private static Rectangle cardColor;
@@ -209,11 +210,11 @@ public class ModelGUI extends Application {
 
     /**
      * Randomly chooses a zero (no) or a 1 (yes).
-     * There's a 25% chance that a Zero will be chosen.
+     * There's a 5% chance that a Zero will be chosen. (1/20)
      * @return  a 0 or a 1
      */
     private static int unoResponse(){
-        int[] array = {0,0,0,1,1,1,1,1,1,1,1,1};
+        int[] array = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
         int rnd = new Random().nextInt(array.length);
         return array[rnd];
     }
@@ -227,16 +228,18 @@ public class ModelGUI extends Application {
         public void run() {
             System.out.println("SOMEONE OTHER THAN PLAYER 1 HAS UNO; PLAYER 1, PLEASE DO NOT PRESS THE UNO BUTTON!");
             try{
-                sleep(1250);
+                sleep(1100);
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
-            if(unoResponse() == 1){
+            int pressButton = unoResponse();
+            if(pressButton == 1){
                 Platform.runLater(()->{
                     unoButton.fire();
                 });
+                System.out.println("Sucessfully pressed UNO: " + pressButton);
             }else{
-                System.out.println("oops! UnoResponse: " + unoResponse());
+                System.out.println("oops! UnoResponse: " + pressButton);
             }
             try{
                 sleep(500);
@@ -272,8 +275,10 @@ public class ModelGUI extends Application {
         //event handling
         yes.setOnAction(mouseEvent ->{
             if(turnOrder.peek().getHand().getCanPlayDraw4() == false){
+                System.out.println("The challenger won! The TURN PLAYER must draw 4 cards!");
                 challengerWon = true;
             }else{
+                System.out.println("The challenger lost! They must draw 6 cards!");
                 challengerLost = true;
             }
             turnOrder.peek().getHand().falsifyCanPlayDraw4(false);
@@ -281,6 +286,7 @@ public class ModelGUI extends Application {
         });
 
         no.setOnAction(mouseEvent -> {
+            System.out.println("Challenge cancelled.");
             stage3.close();
         });
 
@@ -336,6 +342,7 @@ public class ModelGUI extends Application {
         //event handling
         red.setOnAction(mouseEvent -> {
             updateDiscardPileStackPane(RED, "RED");
+            System.out.println("Color chosen: RED");
             turnPlayer.setMyTurn(false);
             playingField.prepNextPlayer();  //Player made their move.
             synchronized (turnPlayer){
@@ -350,6 +357,7 @@ public class ModelGUI extends Application {
 
         yellow.setOnAction(mouseEvent -> {
             updateDiscardPileStackPane(YELLOW, "YELLOW");
+            System.out.println("Color chosen: YELLOW");
             turnPlayer.setMyTurn(false);
             playingField.prepNextPlayer();  //Player made their move.
             synchronized (turnPlayer){
@@ -364,6 +372,7 @@ public class ModelGUI extends Application {
 
         green.setOnAction(mouseEvent -> {
             updateDiscardPileStackPane(GREEN, "GREEN");
+            System.out.println("Color chosen: GREEN");
             turnPlayer.setMyTurn(false);
             playingField.prepNextPlayer();  //Player made their move.
             synchronized (turnPlayer){
@@ -378,6 +387,7 @@ public class ModelGUI extends Application {
 
         blue.setOnAction(mouseEvent -> {
             updateDiscardPileStackPane(BLUE, "BLUE");
+            System.out.println("Color chosen: BLUE");
             turnPlayer.setMyTurn(false);
             playingField.prepNextPlayer();  //Player made their move.
             synchronized (turnPlayer){
@@ -484,17 +494,17 @@ public class ModelGUI extends Application {
         HandGrid p1HandGrid = new HandGrid(1);
         //Putting initial cards in hand... each card is a button!
         for (int i = 0; i < 7; ++i) {
-            Button button = new Button();
-            button.setDisable(true);            //disable/enable PLAYER 1's cards HERE!
-            button.setPrefSize(CARDLENGTH, CARDHEIGHT);
             int number = p1.getHand().getHand().get(i).getNumber();
             String color = p1.getHand().getHand().get(i).getColor();
+            CardButton button = new CardButton(color, number);
+            button.setDisable(true);            //disable/enable PLAYER 1's cards HERE!
+            button.setPrefSize(CARDLENGTH, CARDHEIGHT);
             setHandCardColor(button, color);
 
             button.setOnMouseClicked(mouseEvent -> {
                 if (discardPile.add(p1.getHand().playCard(color, number))) {
                     p1.getHand().remove(p1.getHand().playCard(color, number));  //remove hand from the hand (the Model)
-                    p1HandGrid.remove(button);                                 //remove card from handGrid (the View)
+                    p1.getHandGrid().remove(button);                                 //remove card from handGrid (the View)
                     checkForUno(p1);
 
                     //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
@@ -619,19 +629,18 @@ public class ModelGUI extends Application {
         leftHBox.setAlignment(Pos.CENTER);
         HandGrid p2HandGrid = new HandGrid(2);
         for (int i = 0; i < 7; ++i) {
-            Button button = new Button();
-            button.setDisable(true);
-            button.setPrefSize(CARDHEIGHT, CARDLENGTH);
             int number = p2.getHand().getHand().get(i).getNumber();
             String color = p2.getHand().getHand().get(i).getColor();
-            setHandCardColor(button, color);
+            CardButton button = new CardButton(color, number);
+            button.setDisable(true);
+            button.setPrefSize(CARDHEIGHT, CARDLENGTH);
+            //setHandCardColor(button, color);
 
             button.setOnAction(mouseEvent -> {
                 if (discardPile.add(p2.getHand().playCard(color, number))) {
                     p2.getHand().remove(p2.getHand().playCard(color, number));  //remove hand from the hand (the Model)
-                    p2HandGrid.remove(button);
+                    p2.getHandGrid().remove(button);                                  //remove card from handGrid (the View)
                     checkForUno(p2);
-                    //remove card from handGrid (the View)
                     //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                     p2.getHandGrid().disableAll(p2);
                     strToColor(color);
@@ -722,7 +731,7 @@ public class ModelGUI extends Application {
             });
 
             //Set color of text on the card button (view)
-            if (color.equals("YELLOW")) {
+            /*if (color.equals("YELLOW")) {
                 button.setTextFill(BLACK);
             } else {
                 button.setTextFill(WHITE);
@@ -740,7 +749,8 @@ public class ModelGUI extends Application {
                 button.setText("WILD\nDRAW 4");
             } else {
                 button.setText(color + " " + number);
-            }
+            }*/
+            button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
             p2HandGrid.add(button, i, 2);   //hand should just be 1 COL
         }
         p2.setHandGrid(p2HandGrid);
@@ -754,17 +764,17 @@ public class ModelGUI extends Application {
             p3Label.setText("PLAYER 3");
             topVBox.setAlignment(Pos.CENTER);
             for (int i = 0; i < 7; ++i) {
-                Button button = new Button();
-                button.setDisable(true);
-                button.setPrefSize(CARDLENGTH, CARDHEIGHT);
                 int number = p3.getHand().getHand().get(i).getNumber();
                 String color = p3.getHand().getHand().get(i).getColor();
-                setHandCardColor(button, color);
+                CardButton button = new CardButton(color, number);
+                button.setDisable(true);
+                button.setPrefSize(CARDLENGTH, CARDHEIGHT);
+                //setHandCardColor(button, color);
 
                 button.setOnAction(mouseEvent -> {
                     if (discardPile.add(p3.getHand().playCard(color, number))) {
                         p3.getHand().remove(p3.getHand().playCard(color, number));      //remove hand from the hand (the Model)
-                        p3HandGrid.remove(button);                                      //remove card from handGrid (the View)
+                        p3.getHandGrid().remove(button);                                      //remove card from handGrid (the View)
                         checkForUno(p3);
                         //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                         p3.getHandGrid().disableAll(p3);
@@ -857,7 +867,7 @@ public class ModelGUI extends Application {
                 });
 
                 //set the color of the text on the card button
-                if (color.equals("YELLOW")) {
+                /*if (color.equals("YELLOW")) {
                     button.setTextFill(BLACK);
                 } else {
                     button.setTextFill(WHITE);
@@ -875,7 +885,8 @@ public class ModelGUI extends Application {
                     button.setText("WILD\nDRAW 4");
                 } else {
                     button.setText(color + " " + number);
-                }
+                }*/
+                button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
                 p3HandGrid.add(button, i, 3);   //hand should just be 1 ROW
             }
             p3.setHandGrid(p3HandGrid);
@@ -890,17 +901,17 @@ public class ModelGUI extends Application {
             p4Label.setText("PLAYER 4");
             rightHBox.setAlignment(Pos.CENTER);
             for (int i = 0; i < 7; ++i) {
-                Button button = new Button();
-                button.setDisable(true);
-                button.setPrefSize(CARDHEIGHT, CARDLENGTH);
                 int number = p4.getHand().getHand().get(i).getNumber();
                 String color = p4.getHand().getHand().get(i).getColor();
-                setHandCardColor(button, color);
+                CardButton button = new CardButton(color, number);
+                button.setDisable(true);
+                button.setPrefSize(CARDHEIGHT, CARDLENGTH);
+                //setHandCardColor(button, color);
 
                 button.setOnAction(mouseEvent -> {
                     if (discardPile.add(p4.getHand().playCard(color, number))) {
                         p4.getHand().remove(p4.getHand().playCard(color, number));      //remove hand from the hand (the Model)
-                        p4HandGrid.remove(button);                                      //remove card from handGrid (the View)
+                        p4.getHandGrid().remove(button);                                      //remove card from handGrid (the View)
                         checkForUno(p4);
                         //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                         p4.getHandGrid().disableAll(p4);
@@ -993,7 +1004,7 @@ public class ModelGUI extends Application {
                 });
 
                 //Set the color of the text on the Card Button
-                if (color.equals("YELLOW")) {
+                /*if (color.equals("YELLOW")) {
                     button.setTextFill(BLACK);
                 } else {
                     button.setTextFill(WHITE);
@@ -1011,7 +1022,8 @@ public class ModelGUI extends Application {
                     button.setText("WILD\nDRAW 4");
                 } else {
                     button.setText(color + " " + number);
-                }
+                }*/
+                button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
                 p4HandGrid.add(button, i, 4);   //hand should just be 1 COL
             }
             p4.setHandGrid(p4HandGrid);
@@ -1119,6 +1131,7 @@ public class ModelGUI extends Application {
             System.exit(1);
         });
         primaryStage.show();
+        mainStage = primaryStage;
 
         p1.setMyTurn(true);
 
@@ -1314,16 +1327,17 @@ public class ModelGUI extends Application {
             unoDeckButton.setDisable(true);
 
             //add card to the view!
-            Button button = new Button();
+            int number = drawnCard.getNumber();
+            String color = drawnCard.getColor();
+            CardButton button = new CardButton(color, number);
             if (player.getPlayerNumber() % 2 == 0) {  //even
                 button.setPrefSize(CARDHEIGHT, CARDLENGTH);
             } else {      //odd
                 button.setPrefSize(CARDLENGTH, CARDHEIGHT);
-
             }
-            int number = drawnCard.getNumber();
-            String color = drawnCard.getColor();
-            setHandCardColor(button, color);
+            if(player.getPlayerNumber() == 1) {
+                setHandCardColor(button, color);
+            }
 
             button.setOnAction(mouseEvent2 -> {
                 if (discardPile.add(player.getHand().playCard(color, number))) {
@@ -1424,24 +1438,28 @@ public class ModelGUI extends Application {
             });
 
             //set the color of the text on the card Button
-            if (color.equals("YELLOW")) {
-                button.setTextFill(BLACK);
-            } else {
-                button.setTextFill(WHITE);
-            }
-            //set the text on the card Button
-            if (number == 10) {
-                button.setText(color + "\nSKIP");
-            } else if (number == 11) {
-                button.setText(color + "\nREVERSE");
-            } else if (number == 12) {
-                button.setText(color + "\nDRAW 2");
-            } else if (number == 99) {
-                button.setText("WILD\nCARD");
-            } else if (number == 100) {
-                button.setText("WILD\nDRAW 4");
-            } else {
-                button.setText(color + " " + number);
+            if(player.getPlayerNumber() == 1) {
+                if (color.equals("YELLOW")) {
+                    button.setTextFill(BLACK);
+                } else {
+                    button.setTextFill(WHITE);
+                }
+                //set the text on the card Button
+                if (number == 10) {
+                    button.setText(color + "\nSKIP");
+                } else if (number == 11) {
+                    button.setText(color + "\nREVERSE");
+                } else if (number == 12) {
+                    button.setText(color + "\nDRAW 2");
+                } else if (number == 99) {
+                    button.setText("WILD\nCARD");
+                } else if (number == 100) {
+                    button.setText("WILD\nDRAW 4");
+                } else {
+                    button.setText(color + " " + number);
+                }
+            }else{
+                button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
             }
             int lastSlot = player.getHandGrid().getSize();
             //System.out.println("The slot to add the card they just drew: slot # " + " lastSlot");
@@ -1466,6 +1484,39 @@ public class ModelGUI extends Application {
                 }
             }
         });
+
+        if(player.getPlayerNumber() != 1){
+            drawOneThread drawAI = new drawOneThread();
+            drawAI.start();
+        }
+    }
+
+    /**
+     * If the turnPlayer isn't player 1, this thread
+     * acts as an AI and presses the deckButton to
+     * allow the turnPlayer to draw 1 new card.
+     */
+    private static class drawOneThread extends Thread{
+        public drawOneThread(){
+
+        }
+
+        @Override
+        public void run() {
+            try{
+                sleep(1000);
+            }catch(InterruptedException e){
+                e.printStackTrace();
+            }
+            Platform.runLater(()->{
+                unoDeckButton.fire();
+            });
+            try{
+                sleep(1500);
+            }catch(InterruptedException e){
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -1502,17 +1553,18 @@ public class ModelGUI extends Application {
                     player.getHand().add(drawnCard);
 
                     //add card to the view!
-                    Button button = new Button();
+                    int number = drawnCard.getNumber();
+                    String color = drawnCard.getColor();
+                    CardButton button = new CardButton(color, number);
                     button.setDisable(true);
                     if (player.getPlayerNumber() % 2 == 0) {  //even
                         button.setPrefSize(CARDHEIGHT, CARDLENGTH);
                     } else {      //odd
                         button.setPrefSize(CARDLENGTH, CARDHEIGHT);
-
                     }
-                    int number = drawnCard.getNumber();
-                    String color = drawnCard.getColor();
-                    setHandCardColor(button, color);
+                    if(player.getPlayerNumber() == 1) {
+                        setHandCardColor(button, color);
+                    }
 
                     button.setOnAction(mouseEvent2 -> {
                         if (discardPile.add(player.getHand().playCard(color, number))) {
@@ -1609,25 +1661,29 @@ public class ModelGUI extends Application {
                         }
                     });
 
-                    //set the color of the text on the card Button
-                    if (color.equals("YELLOW")) {
-                        button.setTextFill(BLACK);
-                    } else {
-                        button.setTextFill(WHITE);
-                    }
-                    //set the text on the card Button
-                    if (number == 10) {
-                        button.setText(color + "\nSKIP");
-                    } else if (number == 11) {
-                        button.setText(color + "\nREVERSE");
-                    } else if (number == 12) {
-                        button.setText(color + "\nDRAW 2");
-                    } else if (number == 99) {
-                        button.setText("WILD\nCARD");
-                    } else if (number == 100) {
-                        button.setText("WILD\nDRAW 4");
-                    } else {
-                        button.setText(color + " " + number);
+                    if(player.getPlayerNumber() == 1) {
+                        //set the color of the text on the card Button
+                        if (color.equals("YELLOW")) {
+                            button.setTextFill(BLACK);
+                        } else {
+                            button.setTextFill(WHITE);
+                        }
+                        //set the text on the card Button
+                        if (number == 10) {
+                            button.setText(color + "\nSKIP");
+                        } else if (number == 11) {
+                            button.setText(color + "\nREVERSE");
+                        } else if (number == 12) {
+                            button.setText(color + "\nDRAW 2");
+                        } else if (number == 99) {
+                            button.setText("WILD\nCARD");
+                        } else if (number == 100) {
+                            button.setText("WILD\nDRAW 4");
+                        } else {
+                            button.setText(color + " " + number);
+                        }
+                    }else{
+                        button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
                     }
                     int lastSlot = player.getHandGrid().getSize();
                     player.getHandGrid().add(button, lastSlot, player.getPlayerNumber());   //hand should just be 1 ROW
@@ -1639,7 +1695,18 @@ public class ModelGUI extends Application {
     }
 
     public void stop() {
-        System.out.println("stopped");
+        System.out.println("GAME OVER");
+        System.exit(1);
+    }
+
+    /**
+     * When a player has won, a victoryWindow appears.
+     * In the window, a button labeled "OK" is there.
+     * If the OK button is pressed, this method is called.
+     * It goes to the stop() method and then everything exits.
+     */
+    public static void endGame(){
+        mainStage.close();
     }
 
     public static void main(String[] args) {
@@ -1761,7 +1828,7 @@ public class ModelGUI extends Application {
                     yes.setDisable(false);
                     yes.fire();
                 });
-            } else if (cardJustDrawn || challengeResponse() == 0 ) {
+            } else if (cardJustDrawn || challengeResponse() == 0 || turnOrder.peek().getHand().getSize() <= 1) {
                 Platform.runLater(()->{
                     no.setDisable(false);
                     no.fire();
@@ -1777,5 +1844,5 @@ public class ModelGUI extends Application {
         }
     }
 
-}//last curly brace is below
+}//last curly brace
 

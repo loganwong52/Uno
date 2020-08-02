@@ -1,12 +1,12 @@
 package sample;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-
-import java.util.ConcurrentModificationException;
+import javafx.scene.paint.Color;
 import java.util.Iterator;
+import java.util.Random;
 
 public class HandGrid{
     //essentially a gridpane that holds buttons
@@ -27,7 +27,7 @@ public class HandGrid{
      * @param rowOrCol
      * @param playerNumber
      */
-    public void add(Node button, int rowOrCol, int playerNumber){
+    public void add(CardButton button, int rowOrCol, int playerNumber){
         if(playerNumber%2 == 0){    //players 2 & 4 are vertical
             gridPane.add(button, 0, rowOrCol);      //rowOrCol represents a row index       (node, col#, row#)
             gridPane.setVgap(3);
@@ -38,10 +38,12 @@ public class HandGrid{
     }
 
     /**
-     * removes a button from gridPane
-     * @param button
+     * Removes a button from gridPane.
+     * Then it shifts all the buttons that were to
+     * THAT button's right, 1 space left.
+     * @param button    the button to be removed
      */
-    public void remove(Node button){
+    public void remove(CardButton button){
         GridPane temp = new GridPane();
         gridPane.getChildren().remove(button);      //the space at (col,row) is now null (I think)
         Iterator<Node> it = gridPane.getChildren().iterator();

@@ -3,6 +3,7 @@ package sample;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -76,14 +77,19 @@ public class Player extends Thread{
                 Label winner = new Label();
                 Label youLost = new Label("YOU LOST!");
                 Stage victoryWindow = new Stage();
+                Button okay = new Button("OK");
+                okay.setOnMouseClicked(mouseEvent->{
+                    victoryWindow.close();
+                    ModelGUI.endGame();
+                });
                 VBox vBox = new VBox();
                 if(playerNumber != 1){
                     winner.setText("PLAYER " + playerNumber + " won the game!");
-                    vBox.getChildren().addAll(winner, youLost);
+                    vBox.getChildren().addAll(winner, youLost, okay);
                     vBox.setAlignment(Pos.CENTER);
                 }else{
                     winner.setText("PLAYER " + playerNumber + " won the game!");        //basically player 1, you, won the game
-                    vBox.getChildren().add(winner);
+                    vBox.getChildren().addAll(winner, okay);
                     vBox.setAlignment(Pos.CENTER);
                 }
                 victoryWindow.setScene(new Scene(vBox));

@@ -1,6 +1,10 @@
 package sample;
 
+import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.paint.Color;
+
+import java.util.Random;
 import java.util.Stack;
 import static javafx.scene.paint.Color.*;
 
@@ -86,7 +90,7 @@ public class PlayingField{
         }
         else{
             try{
-                turnPlayer.sleep(250);      //to prevent the HUMAN player from being overwhelmed by speed.
+                turnPlayer.sleep(1500);      //to prevent the HUMAN player from being overwhelmed by speed.
             }catch(InterruptedException e){
                 e.printStackTrace();
             }
@@ -102,6 +106,13 @@ public class PlayingField{
         }
         ModelGUI.turnOrder.peek().getHand().canPlayDraw4(topColor, topNum);         //this checks if the turnPlayer can play a Draw 4
 
+        if(turnPlayer.getPlayerNumber() != 1){
+            AiThread ai = new AiThread();
+            ai.setTurnPlayer(turnPlayer);
+            ai.start();
+
+        }
+        //no matter the player, make the player thread wait...?
         try {
             /*waiting for the player to click a card-button in the hand OR
             in the case of a wild card, once the color is chosen.
@@ -185,5 +196,222 @@ public class PlayingField{
     public synchronized void prepNextPlayer(){
         notifyAll();
         ready = true;
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    private class AiThread extends Thread{
+        Player turnPlayer;
+
+        public AiThread(){
+
+        }
+
+        public void setTurnPlayer(Player p){
+            turnPlayer = p;
+        }
+
+        private boolean hasValidSkip(){
+            CardButton temp;
+            for(Node card : turnPlayer.getHandGrid().getGridKids()) {
+                temp = (CardButton)card;
+                //card in hand is a 10 AND it's color matches the topColor
+                if((temp.getNumber() == 10 && (temp.getColorColor().equals(topColor) || topNum == 10))){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean hasValidRevese(){
+            CardButton temp;
+            for(Node card : turnPlayer.getHandGrid().getGridKids()) {
+                temp = (CardButton)card;
+                //card in hand is a 11 AND it's color matches the topColor
+                if((temp.getNumber() == 11 && (temp.getColorColor().equals(topColor) || topNum == 11))){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean hasValidDraw2(){
+            CardButton temp;
+            for(Node card : turnPlayer.getHandGrid().getGridKids()) {
+                temp = (CardButton)card;
+                //card in hand is a 12 AND it's color matches the topColor
+                if((temp.getNumber() == 12 && (temp.getColorColor().equals(topColor) || topNum == 12))){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void playACard(Player nextPlayer){
+            Platform.runLater(()->{
+                int playerTracker = turnPlayer.getPlayerNumber();
+                int validSameColor = 0;
+                int validSameNum = 0;
+                int totalValidNormalCards = 0;
+                int wildCards = 0;
+                int wildDrawFours = 0;
+                int validZeroes = 0;
+                CardButton temp;
+
+                /*Smart AI: sees that the next player is close to winning
+                  so the AI tries to sabotage them (if possible)*/
+                if(nextPlayer.getHand().getSize() <= 2){
+                    CardButton card;
+                    if(hasValidDraw2()){
+                        for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                            card = (CardButton)c;
+                            //card in hand is a 12 AND it's color matches the topColor
+                            if((card.getNumber() == 12 && (card.getColorColor().equals(topColor) || topNum == 12))){
+                                ((CardButton) c).fire();
+                                return;
+                            }
+                        }
+                    }
+                    else if(hasValidSkip()){
+                        for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                            card = (CardButton)c;
+                            //card in hand is a 10 AND it's color matches the topColor
+                            if((card.getNumber() == 10 && (card.getColorColor().equals(topColor) || topNum == 10))){
+                                ((CardButton) c).fire();
+                                return;
+                            }
+                        }
+                    }
+                    else if(hasValidRevese()){
+                        for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                            card = (CardButton)c;
+                            //card in hand is a 11 AND it's color matches the topColor
+                            if((card.getNumber() == 11 && (card.getColorColor().equals(topColor) || topNum == 11))){
+                                ((CardButton) c).fire();
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                for(Node card : turnPlayer.getHandGrid().getGridKids()){
+                    temp = (CardButton)card;
+                    //count number of valid colors or numbers
+                    if(temp.getColorColor().equals(topColor)){
+                        ++validSameColor;
+                        ++totalValidNormalCards;
+                    }else if(temp.getNumber() == topNum){
+                        ++validSameNum;
+                        ++totalValidNormalCards;
+                    }
+                    //count number of wild cards and wild Draw 4's
+                    if(temp.getNumber() == 99){
+                        ++wildCards;
+                    }else if(temp.getNumber() == 100) {
+                        ++wildDrawFours;
+                    }
+                    //count number of valid zeroes
+                    if(temp.getNumber() == 0 && temp.getColorColor().equals(topColor)){
+                        ++validZeroes;
+                    }
+                }
+                System.out.println("AI THREAD STATS for player #" + playerTracker + ":");
+                System.out.println("Total valid normal cards: " + totalValidNormalCards);
+                System.out.println("valid same color: " + validSameColor);
+                System.out.println("valid same num: " + validSameNum);
+                System.out.println("wild cards: " + wildCards);
+                System.out.println("wild draw 4's: " + wildDrawFours);
+                System.out.println("valid zeroes: " + validZeroes);
+
+                CardButton placeHolder;
+                //Try to play a wild draw 4 ILLEGALLY:
+                //has valid cards AND a wild draw 4 AND their hand is small enough to bluff
+                if( validSameColor > 0 && validSameNum > 0 && wildCards > 0 && wildDrawFours > 0 && turnPlayer.getHandGrid().getGridKids().size() < 5){
+                    //there's a 20% chance AI will play it illegaly.
+                    if(chooseToPlayWildDraw4() == 1){
+                        //play wild draw 4.
+                        for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                            placeHolder = (CardButton)c;
+                            if(placeHolder.getNumber() == 100){
+                                ((CardButton) c).fire();
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                //otherwise, THE AI PLAYER ALWAYS SAVES WILD CARDS FOR LAST
+                if(validSameColor == 0 && validSameNum == 0 && wildCards == 0 && wildDrawFours > 0){
+                    //play a wild draw 4
+                    for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                        placeHolder = (CardButton)c;
+                        if(placeHolder.getNumber() == 100){
+                            ((CardButton) c).fire();
+                            return;
+                        }
+                    }
+                }else if(validSameColor == 0 && validSameNum == 0 && wildCards > 0){
+                    //play a wild card
+                    for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                        placeHolder = (CardButton)c;
+                        if(placeHolder.getNumber() == 99){
+                            ((CardButton) c).fire();
+                            return;
+                        }
+                    }
+                }else if(validSameColor > 0 || validSameNum > 0){
+                    //player doesn't have ANY wild cards; play a normal card
+                    for(Node c : turnPlayer.getHandGrid().getGridKids()) {
+                        placeHolder = (CardButton)c;
+                        //IF the card "c" is on valid (AI is 'dumb'; if the LEFT-MOST or TOP-MOST card is valid, it's usually played)
+                        if(placeHolder.getNumber() == topNum || placeHolder.getColorColor().equals(topColor)){
+                            //AI should try to save any Zero cards it has FOR LAST
+                            if(placeHolder.getNumber() == 0 && totalValidNormalCards == 1){
+                                ((CardButton) c).fire();
+                                return;     //there might be bugs here?
+                            } else if(placeHolder.getNumber() != 0){
+                                //so the card is EITHER the same color or the same number AND it's not a zero card
+                                ((CardButton) c).fire();
+                                return;
+                            }
+
+                        }
+                    }
+
+
+                }
+
+            });
+
+
+        }
+
+        /**
+         * there's a 20% chance a 0 will be returned.
+         * @return
+         */
+        private int chooseToPlayWildDraw4(){
+            int[] array = {1,1,0,0,0,0,0,0,0,0};
+            int rnd = new Random().nextInt(array.length);
+            return array[rnd];
+        }
+
+        @Override
+        public void run() {
+            try{
+                synchronized (turnPlayer) {
+                    turnPlayer.wait(2000);
+                }
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            playACard(turnPlayer.getNextPlayer());
+
+            //turnPlayer.getHandGrid().playACard(topColor, topNum, turnPlayer.getNextPlayer());
+            /*if(!topColor.equals(BLACK) && ModelGUI.turnOrder.peek().getHand().needToDraw(topColor, topNum)){
+                //if the hand is invalid, don't even attempt to play a card.
+            }else {
+
+            }*/
+        }
     }
 }
