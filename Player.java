@@ -32,6 +32,10 @@ public class Player extends Thread{
         return playerNumber;
     }
 
+    public int getNextPlayerNumber(){
+        return nextPlayer.getPlayerNumber();
+    }
+
     public void setMyTurn(boolean tf){
         myTurn = tf;
     }

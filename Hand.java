@@ -135,8 +135,9 @@ public class Hand{
             return;
         }
 
-        System.out.println("The turnPlayer has a draw 4. Check their hand:");
-        printHand();
+        //If the turnPlayer JUST drew a card (b/c their whole hand was invalid), check that they indeed have a 100 card
+        //System.out.println("The turnPlayer has a draw 4. Check their hand:");
+        //printHand();
 
         //a valid card is any card that's valid AND it's not a Wild Draw 4
         int numOfValidCards = 0;

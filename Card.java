@@ -30,8 +30,22 @@ public class Card {
         System.out.println("color: " + color + " | number: " + number);
     }
 
-    public String cardInfo(Card c){
-        return c.getColor() + " " + c.getNumber();
+    public String cardInfo(){
+        String effect;
+        if(number == 10){
+            effect = "SKIP";
+        }else if(number == 11){
+            effect = "REVERSE";
+        }else if(number == 12){
+            effect = "DRAW 2";
+        }else if(number == 99){
+            effect = "WILD CARD";
+        }else if(number == 100){
+            effect = "WILD DRAW 4";
+        }else{
+            return color + " " + number;
+        }
+        return color + " " + effect;
     }
 
 

@@ -24,6 +24,10 @@ public class DiscardPile {
         return discardPile.peek().getNumber();
     }
 
+    public String getTopCardInfo(){
+        return discardPile.peek().cardInfo();
+    }
+
     public boolean add(Card placedOnTop){
         // if player types in a color/number that doesn't exist in uno Deck (for ModelPTUI)
         if(placedOnTop == null){
@@ -47,7 +51,7 @@ public class DiscardPile {
             discardPile.push(placedOnTop);
             topColor = placedOnTop.getColor();
 
-            System.out.println(placedOnTop.cardInfo(placedOnTop) + " was a v-a-l-i-d m-o-v-e :)");
+            System.out.println("Card played: " + placedOnTop.cardInfo());
             return true;
 
         }else{

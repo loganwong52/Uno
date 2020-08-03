@@ -144,8 +144,7 @@ public class Deck extends Stack {
      * @return draw  the card that was removed from the stack
      */
     public Card drawOne(){
-        Card draw = deckStack.pop();
-        return draw;
+        return deckStack.pop();
     }
 
     /**
@@ -178,6 +177,7 @@ public class Deck extends Stack {
         for(int i = 0; i < size; ++i){
             deckStack.push(shuffledDiscardPile.get(i));
         }
+        System.out.println("Newly shuffled deckStack size: " + deckStack.size());
         //the old discardPile is assigned to the return value.
         return rVCard;
     }
@@ -186,7 +186,7 @@ public class Deck extends Stack {
      * Makes an array of hands. 1 hand per player.
      * @return the array of hands
      */
-    public Hand[] distributeHands(Deck deck) {
+    public Hand[] distributeHands() {
         Hand[] hands = new Hand[numOfPlayers];
         for(int i = 0; i < numOfPlayers; ++i){
             hands[i] = new Hand();
@@ -194,7 +194,7 @@ public class Deck extends Stack {
 
         for(int i = 0; i < 7; ++i){
             for(int p = 0; p < numOfPlayers; ++p){
-                hands[p].add(deck.getDeckStack().pop());
+                hands[p].add(deckStack.pop());
             }
         }
         return hands;
@@ -212,13 +212,11 @@ public class Deck extends Stack {
          * and turn over a new card.
          */
         System.out.println("---------");
-        System.out.println("The First Card:");
         while(deckStack.peek().getNumber() == 100){
             shuffle(cardsInDeck);
             stackify(cardsInDeck);
         }
-        deckStack.peek().printCard();
-
+        System.out.println("The First Card: " + deckStack.peek().cardInfo());
         return deckStack.pop();
     }
 

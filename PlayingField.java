@@ -18,6 +18,7 @@ public class PlayingField{
     private boolean invalidCardDrawn;
     private boolean previousPlayerHasUno;
     private boolean firstTopCardIsBlack;
+    private boolean firstTopCardIsSpecial;
 
     public PlayingField(int players){
         numOfPlayers = players;
@@ -28,6 +29,7 @@ public class PlayingField{
         invalidCardDrawn = false;
         previousPlayerHasUno = false;
         firstTopCardIsBlack = false;
+        firstTopCardIsSpecial = false;
     }
 
     public void updateColor(Color c){
@@ -54,6 +56,7 @@ public class PlayingField{
     public void setFirstTopCardIsBlack(boolean t) {
         firstTopCardIsBlack = t;
     }
+    public void setFirstTopCardIsSpecial(boolean t){firstTopCardIsSpecial = t;}
 
     /**
      * The critical region for all the Player Threads.
@@ -96,15 +99,23 @@ public class PlayingField{
             }
         }
         ready = false;
+        Platform.runLater(()->{
+            ModelGUI.clearUnoTrackerLabel();
+        });
         if(!firstTopCardIsBlack) {
             turnPlayer.getHandGrid().enableAll(turnPlayer);
         }
         //If the player doesn't have any valid cards, they get to draw 1 card.
         if(!topColor.equals(BLACK) && ModelGUI.turnOrder.peek().getHand().needToDraw(topColor, topNum)){
-            ModelGUI.setUnoDeckButton(false);
-            ModelGUI.unoDeckButtonAction(ModelGUI.turnOrder.peek());
+            if(!firstTopCardIsSpecial) {
+                ModelGUI.setUnoDeckButton(false);
+                ModelGUI.unoDeckButtonAction(ModelGUI.turnOrder.peek());
+                //in the unoDeckButtonAction method, once they draw a card, their hand is checked to see if they can play a draw 4 or not
+                firstTopCardIsSpecial = false;
+            }
+        }else {
+            ModelGUI.turnOrder.peek().getHand().canPlayDraw4(topColor, topNum);         //check if the turnPlayer can play a Draw 4
         }
-        ModelGUI.turnOrder.peek().getHand().canPlayDraw4(topColor, topNum);         //this checks if the turnPlayer can play a Draw 4
 
         if(turnPlayer.getPlayerNumber() != 1){
             AiThread ai = new AiThread();
@@ -160,10 +171,10 @@ public class PlayingField{
                     skip1Player = false;
                 }
 
-                System.out.println("CHECKING of the turnOrder: ");
+                /*System.out.println("CHECKING of the turnOrder: ");
                 for (Player p : ModelGUI.turnOrder) {
                     System.out.println("Player #" + p.getPlayerNumber());
-                }
+                }*/
                 ModelGUI.turnOrder.peek().setMyTurn(true);
                 turnPlayer.stopWaiting();    //tells ModelGUI that the turnOrder has finished updating.
             } else {
@@ -182,13 +193,11 @@ public class PlayingField{
             invalidCardDrawn = false;       //reset the boolean
             ModelGUI.turnOrder.remove();
             ModelGUI.turnOrder.add(turnPlayer);
-            System.out.println("CHECKING of the turnOrder: ");
+            /*System.out.println("CHECKING of the turnOrder: ");
             for (Player p : ModelGUI.turnOrder) {
                 System.out.println("Player #" + p.getPlayerNumber());
-            }
+            }*/
             ModelGUI.turnOrder.peek().setMyTurn(true);
-            System.out.println("Next player: Player #" + ModelGUI.turnOrder.peek().getPlayerNumber());
-            System.out.println("Is it Player " + ModelGUI.turnOrder.peek().getPlayerNumber() + "'s turn?   " + ModelGUI.turnOrder.peek().getTurn());
             turnPlayer.stopWaiting();    //tells ModelGUI that the turnOrder has finished updating.
         }
     }
@@ -314,13 +323,13 @@ public class PlayingField{
                         ++validZeroes;
                     }
                 }
-                System.out.println("AI THREAD STATS for player #" + playerTracker + ":");
+                /*System.out.println("AI THREAD STATS for player #" + playerTracker + ":");
                 System.out.println("Total valid normal cards: " + totalValidNormalCards);
                 System.out.println("valid same color: " + validSameColor);
                 System.out.println("valid same num: " + validSameNum);
                 System.out.println("wild cards: " + wildCards);
                 System.out.println("wild draw 4's: " + wildDrawFours);
-                System.out.println("valid zeroes: " + validZeroes);
+                System.out.println("valid zeroes: " + validZeroes);*/
 
                 CardButton placeHolder;
                 //Try to play a wild draw 4 ILLEGALLY:
