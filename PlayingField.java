@@ -3,13 +3,11 @@ package sample;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
-
 import java.util.Random;
 import java.util.Stack;
 import static javafx.scene.paint.Color.*;
 
-public class PlayingField{
-    //the critical region AKA the monitor
+public class PlayingField{    //the critical region AKA the monito
     private int numOfPlayers;
     private boolean ready;
     private Color topColor;
@@ -83,7 +81,7 @@ public class PlayingField{
         System.out.println("Turn Player: player #" + turnPlayer.getPlayerNumber());
         if(previousPlayerHasUno){
             try{
-                turnPlayer.sleep(2510);
+                turnPlayer.sleep(6500);
                 /*to prevent turnPlayer from going before previous
                 player presses the UNO! button (or forgets to press it)*/
             }catch(InterruptedException e){
@@ -103,11 +101,11 @@ public class PlayingField{
             ModelGUI.clearUnoTrackerLabel();
         });
         if(!firstTopCardIsBlack) {
-            turnPlayer.getHandGrid().enableAll(turnPlayer);
+            turnPlayer.getHandGrid().enableAll();
         }
         //If the player doesn't have any valid cards, they get to draw 1 card.
         if(!topColor.equals(BLACK) && ModelGUI.turnOrder.peek().getHand().needToDraw(topColor, topNum)){
-            if(!firstTopCardIsSpecial) {
+            if(!firstTopCardIsSpecial) {        //when the firstTopCard ISN'T special
                 ModelGUI.setUnoDeckButton(false);
                 ModelGUI.unoDeckButtonAction(ModelGUI.turnOrder.peek());
                 //in the unoDeckButtonAction method, once they draw a card, their hand is checked to see if they can play a draw 4 or not
@@ -123,6 +121,7 @@ public class PlayingField{
             ai.start();
 
         }
+        ModelGUI.updateLastPlayedValues(topColor, topNum);
         //no matter the player, make the player thread wait...?
         try {
             /*waiting for the player to click a card-button in the hand OR
@@ -231,7 +230,7 @@ public class PlayingField{
             return false;
         }
 
-        private boolean hasValidRevese(){
+        private boolean hasValidReverse(){
             CardButton temp;
             for(Node card : turnPlayer.getHandGrid().getGridKids()) {
                 temp = (CardButton)card;
@@ -257,13 +256,14 @@ public class PlayingField{
 
         public void playACard(Player nextPlayer){
             Platform.runLater(()->{
-                int playerTracker = turnPlayer.getPlayerNumber();
+                //int playerTracker = turnPlayer.getPlayerNumber();
                 int validSameColor = 0;
                 int validSameNum = 0;
                 int totalValidNormalCards = 0;
                 int wildCards = 0;
                 int wildDrawFours = 0;
-                int validZeroes = 0;
+                //int validZeroes = 0;
+                int validNonZeroes = 0;
                 CardButton temp;
 
                 /*Smart AI: sees that the next player is close to winning
@@ -290,7 +290,7 @@ public class PlayingField{
                             }
                         }
                     }
-                    else if(hasValidRevese()){
+                    else if(hasValidReverse()){
                         for(Node c : turnPlayer.getHandGrid().getGridKids()) {
                             card = (CardButton)c;
                             //card in hand is a 11 AND it's color matches the topColor
@@ -318,9 +318,9 @@ public class PlayingField{
                     }else if(temp.getNumber() == 100) {
                         ++wildDrawFours;
                     }
-                    //count number of valid zeroes
-                    if(temp.getNumber() == 0 && temp.getColorColor().equals(topColor)){
-                        ++validZeroes;
+                    //count number of valid non zero cards
+                    if(temp.getNumber() != 0){
+                        ++validNonZeroes;
                     }
                 }
                 /*System.out.println("AI THREAD STATS for player #" + playerTracker + ":");
@@ -371,14 +371,22 @@ public class PlayingField{
                     //player doesn't have ANY wild cards; play a normal card
                     for(Node c : turnPlayer.getHandGrid().getGridKids()) {
                         placeHolder = (CardButton)c;
-                        //IF the card "c" is on valid (AI is 'dumb'; if the LEFT-MOST or TOP-MOST card is valid, it's usually played)
+                        //IF the card "c" is on valid (AI typically plays the left-most or top-most card and then exits)
                         if(placeHolder.getNumber() == topNum || placeHolder.getColorColor().equals(topColor)){
-                            //AI should try to save any Zero cards it has FOR LAST
-                            if(placeHolder.getNumber() == 0 && totalValidNormalCards == 1){
+                            if(placeHolder.getNumber() == 100 && totalValidNormalCards == 0 && wildCards == 0) {
+                                //Only play a wild draw 4 if there are no other options!
                                 ((CardButton) c).fire();
-                                return;     //there might be bugs here?
-                            } else if(placeHolder.getNumber() != 0){
-                                //so the card is EITHER the same color or the same number AND it's not a zero card
+                                return;
+                            }else if(placeHolder.getNumber() == 99 && totalValidNormalCards == 0) {
+                                //Only play a wild card if there are no other options!
+                                ((CardButton) c).fire();
+                                return;
+                            }else if(placeHolder.getNumber() == 0 && validNonZeroes == 0){
+                                //try to save any Zero cards it has FOR LAST
+                                ((CardButton) c).fire();
+                                return;
+                            } else{
+                                //so the card is EITHER the same color or the same number AND it's not a zero card AND it's not a wild card
                                 ((CardButton) c).fire();
                                 return;
                             }

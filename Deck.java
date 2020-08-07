@@ -214,6 +214,7 @@ public class Deck extends Stack {
         System.out.println("---------");
         while(deckStack.peek().getNumber() == 100){
             shuffle(cardsInDeck);
+            deckStack.clear();
             stackify(cardsInDeck);
         }
         System.out.println("The First Card: " + deckStack.peek().cardInfo());

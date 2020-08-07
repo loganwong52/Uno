@@ -41,7 +41,7 @@ public class CardButton extends Button {
         }else if(number == 100){
             return "WILD DRAW 4";
         }else{
-            return "no effect";
+            return "" + number;
         }
     }
 

@@ -1,12 +1,9 @@
 package sample;
 
-import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
-import javafx.scene.paint.Color;
 import java.util.Iterator;
-import java.util.Random;
 
 public class HandGrid{
     //essentially a gridpane that holds buttons
@@ -23,9 +20,9 @@ public class HandGrid{
 
     /**
      * adds a button to gridPane
-     * @param button
-     * @param rowOrCol
-     * @param playerNumber
+     * @param button  the button to add
+     * @param rowOrCol  the row/col to add it to
+     * @param playerNumber  odd or even to determine which row/col is 0
      */
     public void add(CardButton button, int rowOrCol, int playerNumber){
         if(playerNumber%2 == 0){    //players 2 & 4 are vertical
@@ -77,15 +74,15 @@ public class HandGrid{
     }
 
 
-    public void enableAll(Player player){
-        for(Node b : player.getHandGrid().getGridKids()){
+    public void enableAll(){
+        for(Node b : gridPane.getChildren()){
             b.setDisable(false);
         }
         clickable = true;
     }
 
-    public void disableAll(Player player){
-        for(Node b : player.getHandGrid().getGridKids()){
+    public void disableAll(){
+        for(Node b : gridPane.getChildren()){
             b.setDisable(true);
         }
         clickable = false;
