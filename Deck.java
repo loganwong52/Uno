@@ -5,17 +5,33 @@ import java.util.Collections;
 import java.util.Stack;
 
 /**
- * this class is the Deck and its methods.
+ * The Deck is a stack of cards. It starts with 108 cards.
+ * It starts off as an unshuffled array of cards.
+ * There are 4 colors. There is 1 zero for each color.
+ * There are 2 of each number per color
+ * going from 1 to 12. Then, there are 4 wild cards,
+ * whose number are 99. Then, there are 4 wild draw
+ * 4 cards, whose number are 100. There are shuffle methods,
+ * a method to distribute hands, a method to recombine
+ * the discardPile with the deck if the deck runs out of
+ * cards and a method to begin the game.
+ *
+ * @author Logan Wong
  */
 public class Deck extends Stack {
     private int numOfPlayers;
     private static Card[] deck;
     private Stack<Card> deckStack;
-    private static final int STARTINGAMT = 108;
+    private static final int STARTING_AMT = 108;
 
+    /**
+     * Initializes the fields and fills the deck array
+     * with cards.
+     * @param num  total number of players
+     */
     public Deck(int num){
         numOfPlayers = num;
-        deck = new Card[STARTINGAMT];
+        deck = new Card[STARTING_AMT];
         deckStack = new Stack<Card>();
 
         //create 1 zero card for each color
@@ -66,17 +82,17 @@ public class Deck extends Stack {
         for(int i = 100; i < 104; ++i){
             deck[i] = new Card("BLACK", 99);
         }
-        for(int i = 104; i < STARTINGAMT; ++i){
+        for(int i = 104; i < STARTING_AMT; ++i){
             deck[i] = new Card("BLACK", 100);
         }
 
     }
 
     /**
-     * shuffles the initial unshuffled deck 10 times.
-     * initial deck is sorted by color and by number.
+     * Shuffles the a deck 10 times.
+     * @param cardsInDeck  amount of cards in the deck to be shuffled
      */
-    public void shuffle(int cardsInDeck){
+    private void shuffle(int cardsInDeck){
         Card[] shuffledDeck = new Card[cardsInDeck];
         ArrayList<Integer> numbers = new ArrayList<>();
         for(int i = 0; i < cardsInDeck; ++i){
@@ -105,6 +121,7 @@ public class Deck extends Stack {
 
     /**
      * turns an array of cards into a STACK of cards
+     * @param cardsInDeck  the amount of cards in the deck
      */
     public void stackify(int cardsInDeck){
         //turn deck, which is an array of cards, into a stack of cards
@@ -116,6 +133,7 @@ public class Deck extends Stack {
     /**
      * shuffles the deck.
      * then turns deck, which is an array, into a stack
+     * @param cardsInDeck  amount of cards in the deck to be shuffled
      */
     public void shuffleWell(int cardsInDeck){
         shuffle(cardsInDeck);
@@ -123,19 +141,12 @@ public class Deck extends Stack {
         //Note that the deck is "reversed", since things are PUSHED into stack
     }
 
+    /**
+     * Gets the deckStack, which is a stack
+     * @return  deckStack
+     */
     public Stack<Card> getDeckStack() {
         return deckStack;
-    }
-
-    /**
-     * prints out the decks' cards-- color and then number
-     */
-    public void printDeck(){
-        for(int i = 0; i < STARTINGAMT; ++i){
-            System.out.println("color: " + deck[i].getColor() + " | number: " +
-                    deck[i].getNumber());
-        }
-        System.out.println(" ");
     }
 
     /**
@@ -149,7 +160,7 @@ public class Deck extends Stack {
 
     /**
      * Shuffles the discardpile and puts it back into the deck.
-     * @param discardPile
+     * @param discardPile  the discardPile, which is a stack
      * @return top card of the discardPile, which is the new discardPile
      */
     public Card replenish(Stack<Card> discardPile){
@@ -200,10 +211,24 @@ public class Deck extends Stack {
         return hands;
     }
 
+    /**
+     * Gets the size of deckStack
+     * @return  deckStack.size()
+     */
     public int getCardsLeft(){
         return deckStack.size();
     }
 
+    /**
+     * After the hands are distributed, this method
+     * Shuffles the deck and returns the top card
+     * to be the first card in the discard pile.
+     * If it's a Wild Draw 4, the card isn't returned
+     * and the deck is reshuffled and a new card is
+     * popped off instead.
+     * @param cardsInDeck  the amount of cards in the deck
+     * @return  the top card of the stack, which is popped off
+     */
     public Card beginGame(int cardsInDeck){
         /**
          * If the first card is a Wild Draw Four card AKA num == 100
@@ -220,5 +245,4 @@ public class Deck extends Stack {
         System.out.println("The First Card: " + deckStack.peek().cardInfo());
         return deckStack.pop();
     }
-
 }

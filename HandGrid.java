@@ -5,13 +5,20 @@ import javafx.scene.Node;
 import javafx.scene.layout.GridPane;
 import java.util.Iterator;
 
+/**
+ * Essentially a GridPane that holds buttons called CardButtons.
+ *
+ * @author Logan Wong
+ */
 public class HandGrid{
-    //essentially a gridpane that holds buttons
-
     private GridPane gridPane;
     private int playerNum;
     private boolean clickable;
 
+    /**
+     * Constructor that initializes the fields
+     * @param owner  playerNumber of the player whose hand this is
+     */
     public HandGrid(int owner){
         gridPane = new GridPane();
         playerNum = owner;
@@ -65,15 +72,28 @@ public class HandGrid{
         }
     }
 
+    /**
+     * Gets the gridpane with all the cardButtons.
+     * @return  the gridpane
+     */
     public GridPane getGridPane() {
         return gridPane;
     }
 
+    /**
+     * Returns the gridPane as an ObservableList.
+     * Basically gridPane.getChildren() for use in
+     * for-each loops.
+     * @return  gridPane.getChildren()
+     */
     public ObservableList<Node> getGridKids(){
         return gridPane.getChildren();
     }
 
-
+    /**
+     * Loops through the gridPane and
+     * enables the cardButtons.
+     */
     public void enableAll(){
         for(Node b : gridPane.getChildren()){
             b.setDisable(false);
@@ -81,6 +101,10 @@ public class HandGrid{
         clickable = true;
     }
 
+    /**
+     * Loops through the gridPane and
+     * disables the cardButtons.
+     */
     public void disableAll(){
         for(Node b : gridPane.getChildren()){
             b.setDisable(true);
@@ -88,14 +112,27 @@ public class HandGrid{
         clickable = false;
     }
 
+    /**
+     * If all the buttons in the handGrid
+     * are enabled, clickable is true; false otherwise
+     * @return  true or false.
+     */
     public boolean isClickable() {
         return clickable;
     }
 
+    /**
+     * changes the value of the field, "clickable"
+     * @param clickable  true or false
+     */
     public void setClickable(boolean clickable) {
         this.clickable = clickable;
     }
 
+    /**
+     * Gets the number of cards in the hand.
+     * @return  size of player's hand
+     */
     public int getSize(){
         return gridPane.getChildren().size();
     }

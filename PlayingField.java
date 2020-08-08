@@ -7,7 +7,22 @@ import java.util.Random;
 import java.util.Stack;
 import static javafx.scene.paint.Color.*;
 
-public class PlayingField{    //the critical region AKA the monito
+/**
+ * This class is the critical region for the player threads.
+ * It controls when a player has to wait for their turn.
+ * It enables/disables a player's buttons. It checks
+ * if the player needs to draw 1 card, it checks if a black
+ * was played, and it notifies the other threads if a player
+ * has won. MOST IMPORTANTLY OF ALL, this is where the
+ * ACTION cards' effects go off. So if a skip, reverse, or
+ * draw 2 card is played, their effects activate in the
+ * this class.
+ *
+ * There is also a subclass that acts as the AI.
+ *
+ * @author Logan Wong
+ */
+public class PlayingField{
     private int numOfPlayers;
     private boolean ready;
     private Color topColor;
@@ -18,6 +33,10 @@ public class PlayingField{    //the critical region AKA the monito
     private boolean firstTopCardIsBlack;
     private boolean firstTopCardIsSpecial;
 
+    /**
+     * Initializes all the fields.
+     * @param players  the total number of players
+     */
     public PlayingField(int players){
         numOfPlayers = players;
         ready = false;
@@ -30,30 +49,73 @@ public class PlayingField{    //the critical region AKA the monito
         firstTopCardIsSpecial = false;
     }
 
+    /**
+     * Updates the topColor
+     * @param c  the new color
+     */
     public void updateColor(Color c){
         topColor = c;
     }
+
+    /**
+     * Updates the top number
+     * @param n  the new number
+     */
     public void updateNum(int n){
         topNum = n;
     }
 
+    /**
+     * Gets the top number
+     * @return  topNum
+     */
     public int getTopNum() {
         return topNum;
     }
+
+    /**
+     * Gets the top color
+     * @return  topColor
+     */
     public Color getTopColor() {
         return topColor;
     }
 
+    /**
+     * Tells playingField when to skip a player
+     * @param skip1Player  a True/false value
+     */
     public void setSkip1Player(boolean skip1Player) {
         this.skip1Player = skip1Player;
     }
+
+    /**
+     * Sets invalidCardDrawn true or false
+     * @param tf  true or false
+     */
     public void setInvalidCardDrawn(boolean tf) {
         invalidCardDrawn = tf;
     }
+
+    /**
+     * Sets the field "previousPlayerHasUno" to true or false
+     * @param tf  true or false
+     */
     public void setPreviousPlayerHasUno(boolean tf){previousPlayerHasUno = tf;}
+
+    /**
+     * Sets the field "firstTopCardIsBlack" to true or false.
+     * @param t  true or false.
+     */
     public void setFirstTopCardIsBlack(boolean t) {
         firstTopCardIsBlack = t;
     }
+
+    /**
+     * If the first card on the discard pile is a 10, 11, or 12,
+     * firstTopCardIsSpecial becomes true. Else, false.
+     * @param t  true or false
+     */
     public void setFirstTopCardIsSpecial(boolean t){firstTopCardIsSpecial = t;}
 
     /**
@@ -79,9 +141,10 @@ public class PlayingField{    //the critical region AKA the monito
         }
         System.out.println("-------------------");
         System.out.println("Turn Player: player #" + turnPlayer.getPlayerNumber());
+        ModelGUI.redifyLabel(turnPlayer.getPlayerNumber());
         if(previousPlayerHasUno){
             try{
-                turnPlayer.sleep(6500);
+                turnPlayer.sleep(5200);
                 /*to prevent turnPlayer from going before previous
                 player presses the UNO! button (or forgets to press it)*/
             }catch(InterruptedException e){
@@ -175,9 +238,11 @@ public class PlayingField{    //the critical region AKA the monito
                     System.out.println("Player #" + p.getPlayerNumber());
                 }*/
                 ModelGUI.turnOrder.peek().setMyTurn(true);
+                ModelGUI.blackifyLabel(turnPlayer.getPlayerNumber());
                 turnPlayer.stopWaiting();    //tells ModelGUI that the turnOrder has finished updating.
             } else {
                 System.out.println("Player #" + turnPlayer.getPlayerNumber() + " has reached 0 cards!!!");
+                ModelGUI.blackifyLabel(turnPlayer.getPlayerNumber());
                 for (Player p : ModelGUI.turnOrder) {
                     if(p.getPlayerNumber() != turnPlayer.getPlayerNumber()) {
                         p.setLost(true);
@@ -197,27 +262,49 @@ public class PlayingField{    //the critical region AKA the monito
                 System.out.println("Player #" + p.getPlayerNumber());
             }*/
             ModelGUI.turnOrder.peek().setMyTurn(true);
+            ModelGUI.blackifyLabel(turnPlayer.getPlayerNumber());
             turnPlayer.stopWaiting();    //tells ModelGUI that the turnOrder has finished updating.
         }
     }
 
+    /**
+     * Notifies all the waiting player threads
+     * (in the while loop in enableCards)
+     * and turns ready to true.
+     */
     public synchronized void prepNextPlayer(){
         notifyAll();
         ready = true;
     }
 
     //------------------------------------------------------------------------------------------------------------------
+    /**
+     * This class acts as the AI players. When it's a player's
+     * turn and they aren't player 1, this thread goes through
+     * their hand and sees what can be played, and then plays
+     * a valid card.
+     *
+     * @author Logan Wong
+     */
     private class AiThread extends Thread{
         Player turnPlayer;
-
         public AiThread(){
 
         }
 
+        /**
+         * Assigns turnPlayer a value.
+         * @param p  the player whose turn it is
+         */
         public void setTurnPlayer(Player p){
             turnPlayer = p;
         }
 
+        /**
+         * Checks the AI player's hand to see if they have
+         * a skip card that they can play.
+         * @return  true if they have a skip card, false otherwise
+         */
         private boolean hasValidSkip(){
             CardButton temp;
             for(Node card : turnPlayer.getHandGrid().getGridKids()) {
@@ -229,7 +316,11 @@ public class PlayingField{    //the critical region AKA the monito
             }
             return false;
         }
-
+        /**
+         * Checks the AI player's hand to see if they have
+         * a reverse card that they can play.
+         * @return  true if they have a reverse card, false otherwise
+         */
         private boolean hasValidReverse(){
             CardButton temp;
             for(Node card : turnPlayer.getHandGrid().getGridKids()) {
@@ -241,7 +332,11 @@ public class PlayingField{    //the critical region AKA the monito
             }
             return false;
         }
-
+        /**
+         * Checks the AI player's hand to see if they have
+         * a draw 2 card that they can play.
+         * @return  true if they have a draw 2 card, false otherwise
+         */
         private boolean hasValidDraw2(){
             CardButton temp;
             for(Node card : turnPlayer.getHandGrid().getGridKids()) {
@@ -254,6 +349,17 @@ public class PlayingField{    //the critical region AKA the monito
             return false;
         }
 
+        /**
+         * The AI player plays a card.
+         * They might play a wild draw 4 illegally
+         * Otherwise, they might try to sabatoge the next
+         * player if the nextPlayer has 2 cards or less in
+         * their hand.
+         * The AI tries to save zeroes for last.
+         * Otherwise, the AI loops through the hand
+         * and plays the first valid card it sees.
+         * @param nextPlayer
+         */
         public void playACard(Player nextPlayer){
             Platform.runLater(()->{
                 //int playerTracker = turnPlayer.getPlayerNumber();
@@ -390,16 +496,10 @@ public class PlayingField{    //the critical region AKA the monito
                                 ((CardButton) c).fire();
                                 return;
                             }
-
                         }
                     }
-
-
                 }
-
             });
-
-
         }
 
         /**
@@ -412,6 +512,12 @@ public class PlayingField{    //the critical region AKA the monito
             return array[rnd];
         }
 
+        /**
+         * This is a thread, so first thing it does
+         * is wait for 2 seconds to not overwhelm
+         * the human player. Then, the AI plays a
+         * card.
+         */
         @Override
         public void run() {
             try{
@@ -422,13 +528,6 @@ public class PlayingField{    //the critical region AKA the monito
                 e.printStackTrace();
             }
             playACard(turnPlayer.getNextPlayer());
-
-            //turnPlayer.getHandGrid().playACard(topColor, topNum, turnPlayer.getNextPlayer());
-            /*if(!topColor.equals(BLACK) && ModelGUI.turnOrder.peek().getHand().needToDraw(topColor, topNum)){
-                //if the hand is invalid, don't even attempt to play a card.
-            }else {
-
-            }*/
         }
     }
 }

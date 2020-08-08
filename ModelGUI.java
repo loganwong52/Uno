@@ -14,17 +14,27 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import static javafx.scene.paint.Color.*;
 
-//This is the VIEW and the CONTROLLER (I think)
+/**
+ * This class acts as the View and the Controller of the
+ * Uno game. It creates the deck, the playingField, and
+ * the player threads. Whenever a window pops up, this
+ * is where it originates. It has one public Concurrent
+ * Linked Queue which holds the turn order of the players
+ * which is updated in the Playing Field class.
+ *
+ * @author Logan Wong
+ */
 public class ModelGUI extends Application {
-    private static final int CARDLENGTH = 75;
-    private static final int CARDHEIGHT = 80;
+    private static final int CARD_LENGTH = 65;
+    private static final int CARD_HEIGHT = 78;
     private static Stage mainStage;
     private static DiscardPile discardPile;
     private static PlayingField playingField;
@@ -52,6 +62,10 @@ public class ModelGUI extends Application {
     private static int numOfPlayers;
     private static Label playByPlayLabel;
     private static String name;
+    private static Label p1Label;
+    private static Label p2Label;
+    private static Label p3Label;
+    private static Label p4Label;
     private Stage rulesStage;
     //Uno Button related stuff
     private static Button unoButton;
@@ -74,14 +88,13 @@ public class ModelGUI extends Application {
     //Uno label related stuff
     private static Label unoTrackerLabel;
     private static boolean someoneHasUno;
-
-    //The ONLY public field in ModelGUI...
+    //The ONLY public field in ModelGUI
     public static ConcurrentLinkedQueue<Player> turnOrder;
 
     /**
      * default constructor which is called before init().
-     * Gets the total number of players that the user
-     * wants to play with.
+     * It initializes player 1's name and gets the total
+     * number of players that the user wants to play with.
      */
     public ModelGUI() {
         Scanner scanner = new Scanner(System.in);
@@ -138,8 +151,44 @@ public class ModelGUI extends Application {
         someoneHasUno = false;
     }
 
+    /**
+     * Gets the player 1's name.
+     * @return  the player 1's name
+     */
     public static String getName(){
         return name;
+    }
+
+    /**
+     * Turns the turnPlayer's label red.
+     * @param playerNum  the turnPlayer's player number
+     */
+    public static void redifyLabel(int playerNum){
+        if(playerNum == 1){
+            p1Label.setTextFill(RED);
+        }else if(playerNum == 2){
+            p2Label.setTextFill(RED);
+        }else if(playerNum == 3){
+            p3Label.setTextFill(RED);
+        }else{
+            p4Label.setTextFill(RED);
+        }
+    }
+
+    /**
+     * Turns the turnPlayer's label black.
+     * @param playerNum  the turnPlayer's player number
+     */
+    public static void blackifyLabel(int playerNum){
+        if(playerNum == 1){
+            p1Label.setTextFill(BLACK);
+        }else if(playerNum == 2){
+            p2Label.setTextFill(BLACK);
+        }else if(playerNum == 3){
+            p3Label.setTextFill(BLACK);
+        }else{
+            p4Label.setTextFill(BLACK);
+        }
     }
 
     /**
@@ -293,17 +342,30 @@ public class ModelGUI extends Application {
      * @return  a 0 or a 1
      */
     private static int unoResponse(){
-        //int[] array = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
-        int[] array = {0,0,0,0,0};
+        int[] array = {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
         int rnd = new Random().nextInt(array.length);
         return array[rnd];
     }
 
+    //-------------------------------------------------------------------------------------------------------------------
+    /**
+     * SUBCLASS #1 of the ModelGUI class.
+     * This is the thread that controls when the non human
+     * players press the UnoButton.
+     *
+     * @author Logan Wong
+     */
     private static class PressUnoButtonThread extends Thread{
         public PressUnoButtonThread(){
 
         }
 
+        /**
+         * When the thread starts, all the other player threads
+         * are waiting/sleeping. This thread waits for 1.1 seconds.
+         * Then, there is a 95% chance that the uno button will be
+         * pressed.
+         */
         @Override
         public void run() {
             System.out.println("SOMEONE OTHER THAN PLAYER 1 HAS UNO; PLAYER 1, PLEASE DO NOT PRESS THE UNO BUTTON!");
@@ -321,6 +383,7 @@ public class ModelGUI extends Application {
             }
         }
     }
+    //-------------------------------------------------------------------------------------------------------------------
 
     /**
      * When the Wild Draw 4 card is played, the next player can
@@ -463,6 +526,13 @@ public class ModelGUI extends Application {
         return array[rnd];
     }
 
+    /**
+     * When a wild draw 4 is played, this method updates the
+     * playByPlay label to say who played it, what color
+     * was chosen, and who's turn is skipped.
+     * @param color  the chosen color as a string
+     * @param turnPlayer  the player who played the wild draw 4
+     */
     private static void wildUpdate(String color, Player turnPlayer){
         if(playingField.getTopNum() == 100) {
             playByPlayLabel.setText("Player " + turnPlayer.getPlayerNumber() + " played a " + discardPile.getTopCardInfo() +
@@ -583,9 +653,14 @@ public class ModelGUI extends Application {
         stage2.showAndWait();
     }
 
+    //-------------------------------------------------------------------------------------------------------------------
     /**
+     * SUBCLASS #2 OF MODELGUI
+     *
      * This thread chooses the color to press if a wild card
      * was played AND the turn player isn't player 1.
+     *
+     * @author Logan Wong
      */
     private static class ColorChoosingThread extends Thread{
         Player turnPlayer;
@@ -593,6 +668,12 @@ public class ModelGUI extends Application {
             turnPlayer = p;
         }
 
+        /**
+         * When this thread starts, it sleeps for 1.5 seconds to
+         * pretend that the AI is thinking. Then, it gets the
+         * color that's most abundant in their hand and chooses
+         * that color in the pop-up window with the 4 colors.
+         */
         @Override
         public void run() {
             try{
@@ -629,6 +710,7 @@ public class ModelGUI extends Application {
             }
         }
     }
+    //-------------------------------------------------------------------------------------------------------------------
 
     /**
      *  Whenever a card-button is clicked, the play-by-play label is updated.
@@ -663,21 +745,28 @@ public class ModelGUI extends Application {
         unoTrackerLabel.setText("");
     }
 
+    /**
+     * When a card is played, this method
+     * updates the discard pile to show the amount of
+     * cards are in the discard pile and the card's
+     * effect or number.
+     * @param number  the card's number
+     */
     private static void changeDiscardPileText(int number){
         if (number == 10) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
             playingField.setSkip1Player(true);
         } else if (number == 11) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
         } else if (number == 12) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
             playingField.setSkip1Player(true);
         } else if (number == 99) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
         } else if (number == 100) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
         } else {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + number);
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + number);
         }
     }
 
@@ -700,7 +789,7 @@ public class ModelGUI extends Application {
 
         //PLAYER 1
         VBox bottomVBox = new VBox();
-        Label p1Label = new Label();
+        p1Label = new Label();
         p1Label.setText(name);
         p1Label.setFont(new Font("Arial", 15));
         bottomVBox.setAlignment(Pos.CENTER);
@@ -711,7 +800,13 @@ public class ModelGUI extends Application {
             String color = p1.getHand().getHand().get(i).getColor();
             CardButton button = new CardButton(color, number);
             button.setDisable(true);            //disable/enable PLAYER 1's cards HERE!
-            button.setPrefSize(CARDLENGTH, CARDHEIGHT);
+            //prevent the button from changing size
+            button.setMinWidth(CARD_LENGTH);
+            button.setPrefWidth(CARD_LENGTH);
+            button.setMaxWidth(CARD_LENGTH);
+            button.setMinHeight(CARD_HEIGHT);
+            button.setPrefHeight(CARD_HEIGHT);
+            button.setMaxHeight(CARD_HEIGHT);
             setHandCardColor(button, color);
 
             button.setOnMouseClicked(mouseEvent -> {
@@ -724,7 +819,6 @@ public class ModelGUI extends Application {
                     //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                     p1.getHandGrid().disableAll();
                     strToColor(color);
-                    //cardColor.setFill(topColor);
                     //set the color of the text on the discard pile
                     if (topColor.equals(YELLOW)) {
                         cardText.setTextFill(BLACK);
@@ -818,8 +912,9 @@ public class ModelGUI extends Application {
             } else if (number == 100) {
                 button.setText("WILD\nDRAW 4");
             } else {
-                button.setText(color + " " + number);
+                button.setText(color + "\n" + number);
             }
+            button.setTextAlignment(TextAlignment.CENTER);
             p1HandGrid.add(button, i, 1);   //hand should just be 1 ROW
         }
         p1.setHandGrid(p1HandGrid);
@@ -828,7 +923,7 @@ public class ModelGUI extends Application {
 
         //PLAYER 2
         HBox leftHBox = new HBox();
-        Label p2Label = new Label();
+        p2Label = new Label();
         p2Label.setText("PLAYER 2");
         p2Label.setFont(new Font("Arial", 15));
         leftHBox.setAlignment(Pos.CENTER);
@@ -838,8 +933,8 @@ public class ModelGUI extends Application {
             String color = p2.getHand().getHand().get(i).getColor();
             CardButton button = new CardButton(color, number);
             button.setDisable(true);
-            button.setPrefSize(CARDHEIGHT, CARDLENGTH);
-            setHandCardColor(button, color);            //make the card-Button have color
+            button.setPrefSize(CARD_HEIGHT, CARD_LENGTH);
+            //setHandCardColor(button, color);            //only player 1 should have colorful buttons
 
             button.setOnAction(mouseEvent -> {
                 if (discardPile.add(p2.getHand().playCard(color, number))) {
@@ -851,7 +946,6 @@ public class ModelGUI extends Application {
                     //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                     p2.getHandGrid().disableAll();
                     strToColor(color);
-                    //cardColor.setFill(topColor);
                     //set the color of the text on discard pile
                     if (topColor.equals(YELLOW)) {
                         cardText.setTextFill(BLACK);
@@ -860,20 +954,20 @@ public class ModelGUI extends Application {
                     }
                     //set the text of the discard pile
                     if (number == 10) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                         playingField.setSkip1Player(true);
                     } else if (number == 11) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                     } else if (number == 12) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                         playingField.setSkip1Player(true);
 
                     } else if (number == 99) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                     } else if (number == 100) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                     } else {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + number);
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + number);
                     }
                     //update playingField fields
                     playingField.updateColor(topColor);
@@ -941,7 +1035,7 @@ public class ModelGUI extends Application {
             });
 
             //Set color of text on the card button (view)
-            if (color.equals("YELLOW")) {
+            /*if (color.equals("YELLOW")) {
                 button.setTextFill(BLACK);
             } else {
                 button.setTextFill(WHITE);
@@ -958,9 +1052,9 @@ public class ModelGUI extends Application {
             } else if (number == 100) {
                 button.setText("WILD\nDRAW 4");
             } else {
-                button.setText(color + " " + number);
-            }
-            //button.setText("UNO!");     //for everyone other than player 1, no one can see the text.
+                button.setText(color + "\n" + number);
+            }*/
+            button.setText("UNO!");     //non-human players have buttons with only UNO
             p2HandGrid.add(button, i, 2);   //hand should just be 1 COL
         }
         p2.setHandGrid(p2HandGrid);
@@ -971,7 +1065,7 @@ public class ModelGUI extends Application {
         VBox topVBox = new VBox();
         HandGrid p3HandGrid = new HandGrid(3);
         if (numOfPlayers >= 3) {
-            Label p3Label = new Label();
+            p3Label = new Label();
             p3Label.setText("PLAYER 3");
             p3Label.setFont(new Font("Arial", 15));
             topVBox.setAlignment(Pos.CENTER);
@@ -980,8 +1074,8 @@ public class ModelGUI extends Application {
                 String color = p3.getHand().getHand().get(i).getColor();
                 CardButton button = new CardButton(color, number);
                 button.setDisable(true);
-                button.setPrefSize(CARDLENGTH, CARDHEIGHT);
-                setHandCardColor(button, color);
+                button.setPrefSize(CARD_LENGTH, CARD_HEIGHT);
+                //setHandCardColor(button, color);      //only player 1's buttons have color
 
                 button.setOnAction(mouseEvent -> {
                     if (discardPile.add(p3.getHand().playCard(color, number))) {
@@ -993,7 +1087,6 @@ public class ModelGUI extends Application {
                         //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                         p3.getHandGrid().disableAll();
                         strToColor(color);
-                        //cardColor.setFill(topColor);
                         //Set color of text on the discard pile
                         if (topColor.equals(YELLOW)) {
                             cardText.setTextFill(BLACK);
@@ -1002,21 +1095,21 @@ public class ModelGUI extends Application {
                         }
                         //set the text on the discard pile
                         if (number == 10) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                             playingField.setSkip1Player(true);
 
                         } else if (number == 11) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                         } else if (number == 12) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                             playingField.setSkip1Player(true);
 
                         } else if (number == 99) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                         } else if (number == 100) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                         } else {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + number);
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + number);
                         }
                         //update playingField fields
                         playingField.updateColor(topColor);
@@ -1084,7 +1177,7 @@ public class ModelGUI extends Application {
                 });
 
                 //set the color of the text on the card button
-                if (color.equals("YELLOW")) {
+                /*if (color.equals("YELLOW")) {
                     button.setTextFill(BLACK);
                 } else {
                     button.setTextFill(WHITE);
@@ -1101,9 +1194,9 @@ public class ModelGUI extends Application {
                 } else if (number == 100) {
                     button.setText("WILD\nDRAW 4");
                 } else {
-                    button.setText(color + " " + number);
-                }
-                //button.setText("UNO!");     //for everyone other than player 1, no one can see the text.
+                    button.setText(color + "\n" + number);
+                }*/
+                button.setText("UNO!");     //for everyone other than player 1, no one can see the text.
                 p3HandGrid.add(button, i, 3);   //hand should just be 1 ROW
             }
             p3.setHandGrid(p3HandGrid);
@@ -1115,7 +1208,7 @@ public class ModelGUI extends Application {
         HBox rightHBox = new HBox();
         HandGrid p4HandGrid = new HandGrid(4);
         if (numOfPlayers == 4) {
-            Label p4Label = new Label();
+            p4Label = new Label();
             p4Label.setText("PLAYER 4");
             p4Label.setFont(new Font("Arial", 15));
             rightHBox.setAlignment(Pos.CENTER);
@@ -1124,8 +1217,8 @@ public class ModelGUI extends Application {
                 String color = p4.getHand().getHand().get(i).getColor();
                 CardButton button = new CardButton(color, number);
                 button.setDisable(true);
-                button.setPrefSize(CARDHEIGHT, CARDLENGTH);
-                setHandCardColor(button, color);
+                button.setPrefSize(CARD_HEIGHT, CARD_LENGTH);
+                //setHandCardColor(button, color);      //only player 1 should have colorful buttons
 
                 button.setOnAction(mouseEvent -> {
                     if (discardPile.add(p4.getHand().playCard(color, number))) {
@@ -1137,7 +1230,6 @@ public class ModelGUI extends Application {
                         //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                         p4.getHandGrid().disableAll();
                         strToColor(color);
-                        //cardColor.setFill(topColor);
                         //set the color of the text on the discard pile
                         if (topColor.equals(YELLOW)) {
                             cardText.setTextFill(BLACK);
@@ -1146,21 +1238,21 @@ public class ModelGUI extends Application {
                         }
                         //set the text on the discard pile
                         if (number == 10) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                             playingField.setSkip1Player(true);
 
                         } else if (number == 11) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                         } else if (number == 12) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                             playingField.setSkip1Player(true);
 
                         } else if (number == 99) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                         } else if (number == 100) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                         } else {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + number);
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + number);
                         }
                         //update the playingField fields
                         playingField.updateColor(topColor);
@@ -1228,7 +1320,7 @@ public class ModelGUI extends Application {
                 });
 
                 //Set the color of the text on the Card Button
-                if (color.equals("YELLOW")) {
+                /*if (color.equals("YELLOW")) {
                     button.setTextFill(BLACK);
                 } else {
                     button.setTextFill(WHITE);
@@ -1245,9 +1337,9 @@ public class ModelGUI extends Application {
                 } else if (number == 100) {
                     button.setText("WILD\nDRAW 4");
                 } else {
-                    button.setText(color + " " + number);
-                }
-                //button.setText("UNO!");     //for everyone other than player 1, no one can see the text.
+                    button.setText(color + "\n" + number);
+                }*/
+                button.setText("UNO!");     //for everyone other than player 1, no one can see the text.
                 p4HandGrid.add(button, i, 4);   //hand should just be 1 COL
             }
             p4.setHandGrid(p4HandGrid);
@@ -1284,8 +1376,7 @@ public class ModelGUI extends Application {
 
         /* centerPane holds discard pile and the deck
         discardpile is a Stackpane w/ rectangle whose color and label change
-        deck is a button. When clicked, add a card to hand
-         */
+        deck is a button. When clicked, add a card to hand*/
         FlowPane centerPane = new FlowPane();
         //normal private fields
         StackPane discardPileStackPane = new StackPane();
@@ -1303,23 +1394,25 @@ public class ModelGUI extends Application {
         }
         //THESE ARE FOR IF THE FIRST CARD IN THE DISCARD PILE IS A SPECIAL CARD!!!
         if (topNumber == 10) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
             //no need to skip 1 extra player...
         } else if (topNumber == 11) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
         } else if (topNumber == 12) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
             //no need to skip 1 extra player... player 1's turn is skipped, and it goes to player 2.
         } else if (topNumber == 99) {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
         } else {
-            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + topNumber);
+            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + topNumber);
         }
+        cardText.setTextAlignment(TextAlignment.CENTER);
 
         //the DECK Button
         unoDeckButton = new Button();
         unoDeckButton.setPrefSize(100, 100);
-        unoDeckButton.setText("Deck\n " + unoDeck.getCardsLeft());
+        unoDeckButton.setText("Deck\n" + unoDeck.getCardsLeft());
+        unoDeckButton.setTextAlignment(TextAlignment.CENTER);
         unoDeckButton.setDisable(true);
         //the DECK Button has 2 action events (in 2 separate methods)
 
@@ -1366,8 +1459,8 @@ public class ModelGUI extends Application {
         borderPane.setTop(topVBox);
         borderPane.setRight(rightHBox);
         scrollPane.setContent(borderPane);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);
         primaryStage.setScene(new Scene(scrollPane));
@@ -1440,10 +1533,13 @@ public class ModelGUI extends Application {
         }
     }
 
+    /**
+     * Creates the window that has the rules.
+     */
     private void rules(){
         rulesStage = new Stage();
         ScrollPane rulesScroller = new ScrollPane();
-        Label rulesLabel = new Label("Setup:\n" +
+        Label rulesLabel = new Label("THE RULES OF UNO:\nSetup:\n" +
                 "-\tThe game is for 2-4 players. \n" +
                 "-\tEvery player starts with seven cards. \n" +
                 "-\tThe rest of the cards are placed in a Draw Pile face down. \n" +
@@ -1516,7 +1612,7 @@ public class ModelGUI extends Application {
         rulesLabel.setWrapText(true);
         rulesScroller.setContent(rulesLabel);
         rulesScroller.setPrefSize(1000, 500);
-        rulesScroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        rulesScroller.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         rulesScroller.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
         rulesScroller.setFitToWidth(true);      //you can't scroll left to right
         rulesScroller.setFitToHeight(false);    //you CAN scroll up and down
@@ -1601,8 +1697,7 @@ public class ModelGUI extends Application {
      */
     public static void reverseTurnOrder() {
         /*if numOfPlayers == 2, reverse turn is same as
-         * the SKIP card. This is done in PlayingField
-         */
+        the SKIP card. This is done in PlayingField*/
         if (numOfPlayers == 3) {
             if (p1.getNextPlayer().equals(p2)) {
                 p1.setNextPlayer(p3);
@@ -1645,6 +1740,10 @@ public class ModelGUI extends Application {
         }
     }
 
+    /**
+     * Disables or enables the unoDeckButton.
+     * @param tF  boolean value of true or false
+     */
     public static void setUnoDeckButton(boolean tF) {
         unoDeckButton.setDisable(tF);
     }
@@ -1669,17 +1768,17 @@ public class ModelGUI extends Application {
                 discardPile.clear(); //clear the discardPile
                 discardPile.getDiscardPile().add(temp);     //make the discardPile the (old) top card
                 if (temp.getNumber() == 10) {
-                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                 } else if (temp.getNumber() == 11) {
-                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                 } else if (temp.getNumber() == 12) {
-                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                 } else if (temp.getNumber() == 99) {
-                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                 } else if (temp.getNumber() == 100) {
-                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                 } else {
-                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + temp.getNumber());
+                    cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + temp.getNumber());
                 }
                 unoDeckButton.setText("Deck\n" + unoDeck.getCardsLeft());
             }
@@ -1700,16 +1799,14 @@ public class ModelGUI extends Application {
             String color = drawnCard.getColor();
             CardButton button = new CardButton(color, number);
             if (player.getPlayerNumber() % 2 == 0) {  //even
-                button.setPrefSize(CARDHEIGHT, CARDLENGTH);
+                button.setPrefSize(CARD_HEIGHT, CARD_LENGTH);
             } else {      //odd
-                button.setPrefSize(CARDLENGTH, CARDHEIGHT);
+                button.setPrefSize(CARD_LENGTH, CARD_HEIGHT);
             }
 
-            setHandCardColor(button, color);
-
-            /*if (player.getPlayerNumber() == 1) {
+            if (player.getPlayerNumber() == 1) {
                 setHandCardColor(button, color);
-            }*/
+            }
 
             button.setOnAction(mouseEvent2 -> {
                 if (discardPile.add(player.getHand().playCard(color, number))) {
@@ -1721,7 +1818,6 @@ public class ModelGUI extends Application {
                     //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                     player.getHandGrid().disableAll();
                     strToColor(color);
-                    //cardColor.setFill(topColor);
                     //Set the color of the text on the discard pile
                     if (topColor.equals(YELLOW)) {
                         cardText.setTextFill(BLACK);
@@ -1730,21 +1826,21 @@ public class ModelGUI extends Application {
                     }
                     //set the text on the discard pile
                     if (number == 10) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                         playingField.setSkip1Player(true);
 
                     } else if (number == 11) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                     } else if (number == 12) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                         playingField.setSkip1Player(true);
 
                     } else if (number == 99) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                     } else if (number == 100) {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                     } else {
-                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + number);
+                        cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + number);
                     }
                     //update the fields of the playingField
                     playingField.updateColor(topColor);
@@ -1815,7 +1911,7 @@ public class ModelGUI extends Application {
             });
 
             //set the color of the text on the card Button
-            //if (player.getPlayerNumber() == 1) {
+            if (player.getPlayerNumber() == 1) {
                 if (color.equals("YELLOW")) {
                     button.setTextFill(BLACK);
                 } else {
@@ -1833,11 +1929,12 @@ public class ModelGUI extends Application {
                 } else if (number == 100) {
                     button.setText("WILD\nDRAW 4");
                 } else {
-                    button.setText(color + " " + number);
+                    button.setText(color + "\n" + number);
                 }
-            /*} else {
+                button.setTextAlignment(TextAlignment.CENTER);
+            } else {
                 button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
-            }*/
+            }
             int lastSlot = player.getHandGrid().getSize();
             //System.out.println("The slot to add the card they just drew: slot # " + " lastSlot");
             player.getHandGrid().add(button, lastSlot, player.getPlayerNumber());   //hand should just be 1 ROW
@@ -1870,9 +1967,13 @@ public class ModelGUI extends Application {
 
 
     /**
+     * SUBCLASS #3 OF MODELGUI
+     *
      * If the turnPlayer isn't player 1, this thread
      * acts as an AI and presses the deckButton to
      * allow the turnPlayer to draw 1 new card.
+     *
+     * @author Logan Wong
      */
     private static class drawOneThread extends Thread{
         private drawOneThread(){ }
@@ -1903,13 +2004,6 @@ public class ModelGUI extends Application {
     private static void unoDeckButtonAction2(Player player, int amount) {
         //this one is "set on action" to allow the .fire() to work.
         unoDeckButton.setOnAction(mouseEvent -> {
-            /*
-             * I think because this is "set on Action", whenever
-             * the unoDeckButton is clicked by a mouse, it triggers this method.
-             * thus, if the unoDeckButton is being clicked to draw 1 card
-             * due to having no VALID cards, then this method shouldn't be
-             * triggered.
-             */
             if ((draw2 && playingField.getTopNum() == 12) || (topColor.equals(BLACK) && playingField.getTopNum() == 100) || (draw2 && player.getHand().getSize() == 1)) {
                 for (int i = 0; i < amount; ++i) {
                     Card drawnCard = unoDeck.drawOne();
@@ -1920,17 +2014,17 @@ public class ModelGUI extends Application {
                         discardPile.clear();    //clear the discardPile
                         discardPile.getDiscardPile().add(temp);     //make the discardPile the (old) top card
                         if (temp.getNumber() == 10) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                         } else if (temp.getNumber() == 11) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                         } else if (temp.getNumber() == 12) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                         } else if (temp.getNumber() == 99) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                         } else if (temp.getNumber() == 100) {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                         } else {
-                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + temp.getNumber());
+                            cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + temp.getNumber());
                         }
                         unoDeckButton.setText("Deck\n" + unoDeck.getCardsLeft());
                     }
@@ -1947,16 +2041,14 @@ public class ModelGUI extends Application {
                     CardButton button = new CardButton(color, number);
                     button.setDisable(true);
                     if (player.getPlayerNumber() % 2 == 0) {  //even
-                        button.setPrefSize(CARDHEIGHT, CARDLENGTH);
+                        button.setPrefSize(CARD_HEIGHT, CARD_LENGTH);
                     } else {      //odd
-                        button.setPrefSize(CARDLENGTH, CARDHEIGHT);
+                        button.setPrefSize(CARD_LENGTH, CARD_HEIGHT);
                     }
 
-                    setHandCardColor(button, color);
-
-                    /*if(player.getPlayerNumber() == 1) {
+                    if(player.getPlayerNumber() == 1) {
                         setHandCardColor(button, color);
-                    }*/
+                    }
 
                     button.setOnAction(mouseEvent2 -> {
                         if (discardPile.add(player.getHand().playCard(color, number))) {
@@ -1968,7 +2060,6 @@ public class ModelGUI extends Application {
                             //disable cards in turnplayer's hand to prevent them from playing more than 1 card in a turn
                             player.getHandGrid().disableAll();
                             strToColor(color);
-                            //cardColor.setFill(topColor);
                             //set the color of the text on the discard pile
                             if (topColor.equals(YELLOW)) {
                                 cardText.setTextFill(BLACK);
@@ -1977,21 +2068,21 @@ public class ModelGUI extends Application {
                             }
                             //set the text on the discard pile
                             if (number == 10) {
-                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     SKIP");
+                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nSKIP");
                                 playingField.setSkip1Player(true);
 
                             } else if (number == 11) {
-                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     REVERSE");
+                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nREVERSE");
                             } else if (number == 12) {
-                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     DRAW 2");
+                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nDRAW 2");
                                 playingField.setSkip1Player(true);
 
                             } else if (number == 99) {
-                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n     WILD");
+                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD");
                             } else if (number == 100) {
-                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n  WILD DRAW 4");
+                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\nWILD DRAW 4");
                             } else {
-                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n       " + number);
+                                cardText.setText("(discard pile)\n(" + discardPile.size() + ")\n" + number);
                             }
                             //update the playingField's fields
                             playingField.updateColor(topColor);
@@ -2058,7 +2149,7 @@ public class ModelGUI extends Application {
                         }
                     });
 
-                    //if(player.getPlayerNumber() == 1) {
+                    if(player.getPlayerNumber() == 1) {
                         //set the color of the text on the card Button
                         if (color.equals("YELLOW")) {
                             button.setTextFill(BLACK);
@@ -2077,11 +2168,12 @@ public class ModelGUI extends Application {
                         } else if (number == 100) {
                             button.setText("WILD\nDRAW 4");
                         } else {
-                            button.setText(color + " " + number);
+                            button.setText(color + "\n" + number);
                         }
-                    /*}else{
+                        button.setTextAlignment(TextAlignment.CENTER);
+                    }else{
                         button.setText("UNO!");     //for everyone other than player 1, no one can see the image.
-                    }*/
+                    }
                     int lastSlot = player.getHandGrid().getSize();
                     player.getHandGrid().add(button, lastSlot, player.getPlayerNumber());   //hand should just be 1 ROW
                 }   //curly brace of the for loop
@@ -2097,6 +2189,10 @@ public class ModelGUI extends Application {
         });
     }
 
+    /**
+     * When the start method is finished, this method is called next.
+     * It prints out GAME OVER and terminates the program.
+     */
     public void stop() {
         System.out.println("GAME OVER");
         System.exit(1);
@@ -2113,11 +2209,25 @@ public class ModelGUI extends Application {
         mainStage.close();
     }
 
+    /**
+     * Calls the default constructor and starts the program.
+     * @param args  command line arguments
+     */
     public static void main(String[] args) {
         launch(args);
     }
 
-    // Subclass Critical Region starts here.
+    /**
+     * SUBCLASS #4 OF MODELGUI
+     *
+     * The CriticalRegion class is only the critical region for
+     * UnoThread objects, which are threads. It regulates
+     * when to disable/enable the unoButton, since there
+     * is a 2.5 second time frame in which it's enabled
+     * and can be pressed when a player has Uno!
+     *
+     * @author Logan Wong
+     */
     public class CriticalRegion {
         public CriticalRegion(){ }
 
@@ -2175,6 +2285,10 @@ public class ModelGUI extends Application {
                 }
             }
         }
+
+        /**
+         * Notifies the thread waiting in the critical region
+         */
         private synchronized void stopWaiting(){
             notifyAll();
         }
@@ -2182,7 +2296,11 @@ public class ModelGUI extends Application {
 
 
     /**
-     * Subclass UnoThread Starts Here!
+     * SUBCLASS #5 OF MODELGUI
+     * The UnoThread subclass is the thread that
+     * controls when the unoButton disables after 2.5 seconds.
+     *
+     * @author Logan Wong
      */
     public static class UnoThread extends Thread{
         private static boolean ready;
@@ -2190,14 +2308,26 @@ public class ModelGUI extends Application {
             ready = false;
         }
 
+        /**
+         * Gets the ready field
+         * @return  ready
+         */
         private static boolean getReady(){
             return ready;
         }
 
+        /**
+         * Changes ready's value.
+         * @param b  true or false
+         */
         private static void changeReady(boolean b){
             ready = b;
         }
 
+        /**
+         * Calls the critical region's method that
+         * acts as the critical region for this thread.
+         */
         public void run() {
             while(true) {
                 criticalRegion.action();
@@ -2251,4 +2381,3 @@ public class ModelGUI extends Application {
     }
 
 }//last curly brace
-
