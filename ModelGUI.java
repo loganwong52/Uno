@@ -2178,7 +2178,7 @@ public class ModelGUI extends Application {
                     player.getHandGrid().add(button, lastSlot, player.getPlayerNumber());   //hand should just be 1 ROW
                 }   //curly brace of the for loop
                 System.out.println("Player #" + player.getPlayerNumber() + "'s new hand size: " + player.getHand().getSize());
-                if(someoneHasUno){
+                if(someoneHasUno && unoButton.isDisabled()){
                     unoTrackerLabel.setText("Player " + playerWithUno + " did not press the UNO! button in time!");
                     playByPlayLabel.setText(playByPlayLabel.getText() + "\nPlayer " + playerWithUno + " drew 2 cards.");
                     someoneHasUno = false;
