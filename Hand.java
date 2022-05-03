@@ -94,16 +94,6 @@ public class Hand{
     }
 
     /**
-     * Prints out a player's hand
-     */
-    public void printHand(){
-        System.out.println("YOUR CURRENT HAND:");
-        for(int i = 0; i < hand.size(); ++i){
-            hand.get(i).printCard();
-        }
-    }
-
-    /**
      * Checks if there are INVALID cards in the hand.
      * If there aren't, it returns true, that the player
      * needs to draw 1 new card. Otherwise, the player

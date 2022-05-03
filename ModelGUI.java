@@ -1566,9 +1566,9 @@ public class ModelGUI extends Application {
                 "Note: you can only put down one card at a time; you cannot stack two or more cards together on the same turn.\n" +
                 "Ex: you cannot put down a Draw Two on top of another Draw Two, or Wild Draw Four during the same turn, or put down two Wild Draw Four cards together.\n" +
                 "\n" +
-                "The game continues until a player has one card left. The moment a player has just one card they must click the button that says “UNO!” If they don’t click it, that player must draw two new cards as a penalty.\n" +
+                "The game continues until a player has one card left. The moment a player has just one card they must click the button that says \"UNO!\" If they don\'t click it, that player must draw two new cards as a penalty.\n" +
                 "\n" +
-                "Assuming that the player is unable to play/discard their last card and needs to draw, but after drawing, is then able to play/discard that penultimate card, the player has to repeat the action of calling out “Uno”. The bottom line is – Clicking the “Uno” button needs to be repeated every time you are left with one card.\n" +
+                "Assuming that the player is unable to play/discard their last card and needs to draw, but after drawing, is then able to play/discard that penultimate card, the player has to repeat the action of calling out \"Uno\". The bottom line is - Clicking the \"Uno\" button needs to be repeated every time you are left with one card.\n" +
                 "\n" +
                 "Once a player has no cards remaining, they win and everyone else loses.\n" +
                 "\n" +

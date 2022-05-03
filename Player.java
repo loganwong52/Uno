@@ -204,14 +204,6 @@ public class Player extends Thread{
     }
 
     /**
-     * Gets a player's lost field
-     * @return  lost
-     */
-    public boolean hasLost() {
-        return lost;
-    }
-
-    /**
      * Sets a player's lost field to true or false
      * @param l  true or false
      */
